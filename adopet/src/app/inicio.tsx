@@ -7,7 +7,8 @@ import { AntDesign } from '@expo/vector-icons';
 
 export default function Inicio() {
   return (
-    <SafeAreaView style={styles.container}>
+     <View style={styles.screen}>
+    <SafeAreaView edges={['top']} style={styles.topSafeArea}>
       <Stack.Screen options={{ headerShown: false }} />
       
       <Header 
@@ -15,12 +16,16 @@ export default function Inicio() {
           leftContent={<AntDesign name="menu" size={26} color="black" />}
           centerContent={<Text style={{ fontSize: 18, fontWeight: 'bold', color: '#6B0889' }}>ADOPET</Text>}
       />
+      </SafeAreaView>
       
       <View style={styles.content}>
         <Text>Edit src/app/index.tsx to edit this screen.</Text>
       </View>  
+
+       <SafeAreaView edges={['bottom']} style={styles.bottomSafeArea}>
       <Footer backgroundColor="#6B0889" />
     </SafeAreaView>
+    </View>
   );
 }
 
@@ -29,9 +34,21 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff', 
   },
+  screen: {
+    flex: 1,
+    backgroundColor: '#F09545', 
+  },
+  topSafeArea: {
+    backgroundColor: '#FAFCFF',
+    zIndex: 10, 
+  },
+  bottomSafeArea: {
+    backgroundColor: '#6B0889', 
+  },
   content: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: '#F09545',
   }
 });

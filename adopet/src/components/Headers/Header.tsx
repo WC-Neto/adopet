@@ -42,6 +42,17 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: 10,
+        
+       
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 4,
+      
+        elevation: 12,
+
+        
+        zIndex: 10, 
     },
     slot: {
         flex: 1,
