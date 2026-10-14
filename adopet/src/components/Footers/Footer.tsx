@@ -22,8 +22,8 @@ export default function Footer({ backgroundColor }: { backgroundColor: string })
                 e amaldiçoar todos nesse grupo */}
 
                 <Image 
-                   source={require('../../../assets/images/logo2.png')} 
-                   style={{ width: 50, height: 50, marginLeft: 10 }} 
+                   source={require('../../../assets/images/logo.png')} 
+                   style={{ width: 40, height: 40, marginLeft: 10 }} 
                    resizeMode="contain" 
                 />
             </View>
