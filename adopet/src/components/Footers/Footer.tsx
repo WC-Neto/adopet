@@ -17,15 +17,15 @@ export default function Footer({ backgroundColor }: { backgroundColor: string })
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <Text style={{ fontSize: 26, fontWeight: 'bold', color: 'white' }}>ADOPET</Text>
 
-                {/* Essa pata aqui é sagrada e é a razão de eu viver, 
+                {/*Essa pata aqui é sagrada e é a razão de eu viver, 
                 se ela for retirada eu vou morrer 
-                e amaldiçoar todos nesse grupo*/}
-{/* 
+                e amaldiçoar todos nesse grupo */}
+
                 <Image 
                    source={require('../../../assets/images/logo2.png')} 
                    style={{ width: 50, height: 50, marginLeft: 10 }} 
                    resizeMode="contain" 
-                /> */}
+                />
             </View>
             
             {/* Socials */}
