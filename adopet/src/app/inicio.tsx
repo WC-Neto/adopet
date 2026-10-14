@@ -3,6 +3,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack } from "expo-router";
 import Header from "../components/Headers/Header"; 
 import Footer from "../components/Footers/Footer";
+import { AntDesign } from '@expo/vector-icons';
 
 export default function Inicio() {
   return (
@@ -11,7 +12,7 @@ export default function Inicio() {
       
       <Header 
           backgroundColor="#FAFCFF"
-          leftContent={<Text>Menu Lateral</Text>}
+          leftContent={<AntDesign name="menu" size={26} color="black" />}
           centerContent={<Text style={{ fontSize: 18, fontWeight: 'bold', color: '#6B0889' }}>ADOPET</Text>}
       />
       
