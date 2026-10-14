@@ -1,14 +1,14 @@
 import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 
 
-export default function PurpleFooter() {
+export default function Footer({ backgroundColor }: { backgroundColor: string }) {
     return (
         <View style={{
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: 10,
-            backgroundColor: '#6B0889'
+            backgroundColor: backgroundColor
         }}>
             {/* Logo */}
             <View>

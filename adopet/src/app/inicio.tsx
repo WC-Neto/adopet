@@ -1,20 +1,24 @@
 import { Text, View, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack } from "expo-router";
-import PurpleFooter from "@/components/Footers/PurpleFooter";
-import WhiteHeader from "../components/Headers/WhiteHeader";
+import Header from "../components/Headers/Header"; 
+import Footer from "../components/Footers/Footer";
 
 export default function Inicio() {
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
-      <WhiteHeader />
+      
+      <Header 
+          backgroundColor="#FAFCFF"
+          leftContent={<Text>Menu Lateral</Text>}
+          centerContent={<Text style={{ fontSize: 18, fontWeight: 'bold', color: '#6B0889' }}>ADOPET</Text>}
+      />
       
       <View style={styles.content}>
         <Text>Edit src/app/index.tsx to edit this screen.</Text>
-      </View>
-      
-      <PurpleFooter />
+      </View>  
+      <Footer backgroundColor="#6B0889" />
     </SafeAreaView>
   );
 }
