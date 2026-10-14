@@ -1,7 +1,7 @@
 import { Text, View, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import BlueHeader from "../components/header";
-import BlueFooter from "../components/footer";
+import BlueHeader from "../components/Headers/BlueHeader";
+import BlueFooter from "../components/Footers/BlueFooter";
 import { Stack } from "expo-router";
 
 export default function Index() {

@@ -8,7 +8,7 @@ export default function BlueHeader() {
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: 10,
-            backgroundColor: '#4897eb'
+            backgroundColor: '#4A90F2'
         }}>
             {/* Logo */}
             <View>
