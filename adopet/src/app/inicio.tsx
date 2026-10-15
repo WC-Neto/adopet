@@ -1,4 +1,4 @@
-import { Text, View, StyleSheet } from "react-native";
+import { Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack } from "expo-router";
 import Header from "../components/Headers/Header"; 
@@ -7,48 +7,26 @@ import { AntDesign } from '@expo/vector-icons';
 
 export default function Inicio() {
   return (
-     <View style={styles.screen}>
-    <SafeAreaView edges={['top']} style={styles.topSafeArea}>
-      <Stack.Screen options={{ headerShown: false }} />
-      
-      <Header 
+    <View className="flex-1 bg-[#F09545]">
+      {/* TOP SAFE AREA */}
+      <SafeAreaView edges={['top']} className="bg-[#FAFCFF] z-10">
+        <Stack.Screen options={{ headerShown: false }} />
+        <Header 
           backgroundColor="#FAFCFF"
           leftContent={<AntDesign name="menu" size={26} color="black" />}
-          centerContent={<Text style={{ fontSize: 18, fontWeight: 'bold', color: '#6B0889' }}>ADOPET</Text>}
-      />
+          centerContent={<Text className="text-[18px] font-bold text-[#6B0889]">ADOPET</Text>}
+        />
       </SafeAreaView>
       
-      <View style={styles.content}>
+      {/* CONTENT BLOCK */}
+      <View className="flex-1 items-center justify-center bg-[#F09545]">
         <Text>Edit src/app/index.tsx to edit this screen.</Text>
       </View>  
 
-       <SafeAreaView edges={['bottom']} style={styles.bottomSafeArea}>
-      <Footer backgroundColor="#6B0889" />
-    </SafeAreaView>
+      {/* BOTTOM SAFE AREA */}
+      <SafeAreaView edges={['bottom']} className="bg-[#6B0889]">
+        <Footer backgroundColor="#6B0889" />
+      </SafeAreaView>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff', 
-  },
-  screen: {
-    flex: 1,
-    backgroundColor: '#F09545', 
-  },
-  topSafeArea: {
-    backgroundColor: '#FAFCFF',
-    zIndex: 10, 
-  },
-  bottomSafeArea: {
-    backgroundColor: '#6B0889', 
-  },
-  content: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: '#F09545',
-  }
-});

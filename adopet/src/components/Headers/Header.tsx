@@ -1,6 +1,5 @@
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import { ReactNode } from 'react';
-
 
 type HeaderProps = {
   backgroundColor?: string;
@@ -9,7 +8,6 @@ type HeaderProps = {
   rightContent?: ReactNode;
 };
 
-
 export default function Header({ 
   backgroundColor = '#4897eb',
   leftContent, 
@@ -17,44 +15,25 @@ export default function Header({
   rightContent 
 }: HeaderProps) {
     return (
-        <View style={[styles.container, { backgroundColor }]}>
+        <View 
+          
+            className="flex-row items-center justify-between p-[10px] z-10 shadow-lg" 
+            style={{ backgroundColor }}
+        >
             {/* Left Slot */}
-            <View style={[styles.slot, { alignItems: 'flex-start' }]}>
+            <View className="flex-1 items-start">
                 {leftContent}
             </View>
 
             {/* Center Slot */}
-            <View style={[styles.slot, { alignItems: 'center' }]}>
+            <View className="flex-1 items-center">
                 {centerContent}
             </View>
             
             {/* Right Slot */}
-            <View style={[styles.slot, { alignItems: 'flex-end' }]}>
+            <View className="flex-1 items-end">
                 {rightContent}
             </View>
         </View>
     );
 }
-
-const styles = StyleSheet.create({
-    container: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: 10,
-        
-       
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 4,
-      
-        elevation: 12,
-
-        
-        zIndex: 10, 
-    },
-    slot: {
-        flex: 1,
-    }
-});

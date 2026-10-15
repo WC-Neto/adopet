@@ -1,35 +1,28 @@
-import { StyleSheet, View, Text, TouchableOpacity, Image } from 'react-native';
-// 1. Import FontAwesome from Expo Vector Icons
+import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { Entypo, FontAwesome, FontAwesome5 } from '@expo/vector-icons';
 
 export default function Footer({ backgroundColor }: { backgroundColor: string }) {
     return (
-        <View style={{
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            padding: 8,
-            paddingLeft: 24,
-            paddingTop: 12,
-            backgroundColor 
-        }}>
+        <View 
+            className="flex-col justify-between p-[8px] pl-[24px] pt-[12px]" 
+            style={{ backgroundColor }}
+        >
             {/* Logo */}
-
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Text style={{ fontSize: 26, fontWeight: 'bold', color: 'white' }}>ADOPET</Text>
+            <View className="flex-row items-center">
+                <Text className="text-[26px] font-bold text-white">ADOPET</Text>
 
                 {/*Essa pata aqui é sagrada e é a razão de eu viver, 
                 se ela for retirada eu vou morrer 
                 e amaldiçoar todos nesse grupo */}
-
                 <Image 
-                   source={require('../../../assets/images/logo.png')} 
-                   style={{ width: 40, height: 40, marginLeft: 10 }} 
+                   source={require('../../../assets/images/logo2.png')} 
+                   className="w-[40px] h-[40px] ml-[10px]"
                    resizeMode="contain" 
                 />
             </View>
             
             {/* Socials */}
-            <View style={{ flexDirection: 'row', justifyContent: 'flex-start', gap: 12, marginTop: 12, paddingBottom: 2, alignItems: 'center' }}>
+            <View className="flex-row justify-start gap-[12px] mt-[12px] pb-[2px] items-center">
                 <TouchableOpacity>
                     <Entypo name="facebook" size={14} color="white" />
                 </TouchableOpacity>

@@ -1,4 +1,4 @@
-import { Text, View, StyleSheet, TouchableOpacity } from "react-native";
+import { Text, View, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Footer from "../components/Footers/Footer";
 import Header from "../components/Headers/Header";
@@ -7,65 +7,43 @@ import AntDesign from "@expo/vector-icons/build/AntDesign";
 
 export default function Index() {
   return (
-    <View style={styles.screen}>
+    
+    <View className="flex-1 bg-[#F09545]">
       <Stack.Screen options={{ headerShown: false }} />
 
-      
-      <SafeAreaView edges={['top']} style={styles.topSafeArea}>
+      {/* TOP SAFE AREA */}
+      <SafeAreaView edges={['top']} className="bg-[#FAFCFF] z-10">
         <Header 
           backgroundColor="#FAFCFF"
           leftContent={<AntDesign name="menu" size={26} color="black" />}
-          centerContent={<Text style={{ fontSize: 18, fontWeight: 'bold', color: '#6B0889' }}>ADOPET</Text>}
+          centerContent={
+            
+            <Text className="text-lg font-bold text-[#6B0889]">
+              ADOPET
+            </Text>
+          }
           rightContent={
-            <View style={{ flexDirection: 'row' }}>
-              <TouchableOpacity style={styles.button}>
-                <Text style={styles.buttonText}>Adotar</Text>
+            
+            <View className="flex-row">
+        
+              <TouchableOpacity className="bg-[#080909] p-[10px] m-[5px] rounded-[5px] shadow-lg">
+            
+                <Text className="text-white font-bold">Adotar</Text>
               </TouchableOpacity>   
             </View>
           }
         />
       </SafeAreaView>
       
-      
-      <View style={styles.content}>
+      {/* ORANGE CONTENT BODY */}
+      <View className="flex-1 items-center justify-center bg-[#F09545]">
         <Text>Edit src/app/index.tsx to edit this screen.</Text>
       </View>
       
-      
-      <SafeAreaView edges={['bottom']} style={styles.bottomSafeArea}>
+      {/* BOTTOM SAFE AREA */}
+      <SafeAreaView edges={['bottom']} className="bg-[#6B0889]">
         <Footer backgroundColor="#6B0889" />
       </SafeAreaView>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: '#F09545', 
-  },
-  topSafeArea: {
-    backgroundColor: '#FAFCFF',
-    zIndex: 10, 
-  },
-  bottomSafeArea: {
-    backgroundColor: '#6B0889', 
-  },
-  button: { 
-    backgroundColor: '#080909', 
-    padding: 10, 
-    margin: 5,
-    borderRadius: 5, 
-    elevation: 12,
-  },
-  buttonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  content: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: '#F09545',
-  }
-});
