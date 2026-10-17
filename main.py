@@ -49,3 +49,23 @@ def obter_pet(pet_id: int):
         if pet.id == pet_id:
             return pet
     raise HTTPException(status_code=404, detail="Pet não encontrado")
+
+# ---------- Menu lateral ----------
+class ItemMenu(BaseModel):
+    label: str
+    rota: str
+
+
+MENU_ITENS: List[ItemMenu] = [
+    ItemMenu(label="Início", rota="/inicio"),
+    ItemMenu(label="Adotar", rota="/adotar"),
+    ItemMenu(label="Doar", rota="/doar"),
+    ItemMenu(label="Minha conta", rota="/conta"),
+    ItemMenu(label="Sobre nós", rota="/sobre"),
+    ItemMenu(label="FAQ", rota="/faq"),
+]
+
+
+@app.get("/menu", response_model=List[ItemMenu])
+def listar_itens_menu():
+    return MENU_ITENS
