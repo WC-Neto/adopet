@@ -1,5 +1,12 @@
 import { useState } from "react";
-import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import {
+  Image,
+  Pressable,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Footer from "../components/Footers/Footer";
 import Header from "../components/Headers/Header";
@@ -8,6 +15,7 @@ import Button from "../components/Buttons/Button";
 import { Stack, router } from "expo-router";
 import AntDesign from "@expo/vector-icons/build/AntDesign";
 import { FontAwesome5 } from "@expo/vector-icons";
+import SideMenu from "../components/SideMenu/SideMenu";
 
 export default function Index() {
   const [nome, setNome] = useState("");
@@ -18,31 +26,39 @@ export default function Index() {
   const [dataNascimento, setDataNascimento] = useState("");
   const [senha, setSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <View className="flex-1 bg-[#F09545]">
       <Stack.Screen options={{ headerShown: false }} />
 
       {/* TOP SAFE AREA */}
-      <SafeAreaView edges={['top']} className="bg-[#FAFCFF] z-10">
-        <Header 
+      <SafeAreaView edges={["top"]} className="bg-[#FAFCFF] z-10">
+        <Header
           backgroundColor="#FAFCFF"
-          leftContent={<AntDesign name="menu" size={26} color="black" />}
+          leftContent={
+            <Pressable
+              onPress={() => setMenuOpen(true)}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Abrir menu"
+            >
+              <AntDesign name="menu" size={26} color="black" />
+            </Pressable>
+          }
           centerContent={
-            <Text className="text-lg font-bold text-[#6B0889]">
-              ADOPET
-            </Text>
+            <Text className="text-lg font-bold text-[#6B0889]">ADOPET</Text>
           }
           rightContent={
             <View className="flex-row">
               <TouchableOpacity className="bg-[#080909] p-[10px] m-[5px] rounded-[5px] shadow-lg">
                 <Text className="text-white font-bold">Adotar</Text>
-              </TouchableOpacity>   
+              </TouchableOpacity>
             </View>
           }
         />
       </SafeAreaView>
-      
+
       {/* CONTENT BODY */}
       <ScrollView
         className="flex-1 bg-[#F2EFEF]"
@@ -183,10 +199,13 @@ export default function Index() {
         </View>
 
         {/* BOTTOM SAFE AREA */}
-        <SafeAreaView edges={['bottom']} className="bg-[#6B0889]">
+        <SafeAreaView edges={["bottom"]} className="bg-[#6B0889]">
           <Footer backgroundColor="#6B0889" />
         </SafeAreaView>
       </ScrollView>
+
+      {/* Menu lateral */}
+      <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
     </View>
   );
 }
