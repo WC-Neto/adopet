@@ -22,7 +22,7 @@ import { useRouter, type Href } from "expo-router";
 type ItemMenu = { label: string; rota: string };
 
 const FALLBACK: ItemMenu[] = [
-  { label: "Início", rota: "/inicio" },
+  { label: "Início", rota: "/" },
   { label: "Adotar", rota: "/adotar" },
   { label: "Doar", rota: "/doar" },
   { label: "Minha conta", rota: "/conta" },
@@ -64,15 +64,14 @@ export default function SideMenu({ open, onClose }: Props) {
     return () => controller.abort();
   }, []);
 
-  // Abre/fecha com animação; só desmonta o Modal depois que ela termina
+  // Ao abrir, monta o Modal já neste render (sem setState dentro de efeito)
+  if (open && !mounted) setMounted(true);
+
+  // Anima abrir/fechar; só desmonta o Modal depois que a animação termina
   useEffect(() => {
     const config = { duration: DURACAO, easing: Easing.out(Easing.cubic) };
-    if (open) {
-      setMounted(true);
-      progress.value = withTiming(1, config);
-      return;
-    }
-    progress.value = withTiming(0, config);
+    progress.value = withTiming(open ? 1 : 0, config);
+    if (open) return;
     const t = setTimeout(() => setMounted(false), DURACAO);
     return () => clearTimeout(t);
   }, [open, progress]);

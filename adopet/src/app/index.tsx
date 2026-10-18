@@ -1,207 +1,209 @@
-import { useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
+import { useRef, useState } from "react";
 import {
-  Image,
-  Pressable,
+  FlatList,
+  ImageBackground,
   ScrollView,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import Footer from "../components/Footers/Footer";
-import Header from "../components/Headers/Header";
-import Input from "../components/Inputs/Input";
-import Button from "../components/Buttons/Button";
-import { Stack, router } from "expo-router";
-import AntDesign from "@expo/vector-icons/build/AntDesign";
-import { FontAwesome5 } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Footer from "../components/Footer";
+import PetCard, { Pet } from "../components/PetCard";
 import SideMenu from "../components/SideMenu/SideMenu";
+import TopBar from "../components/TopbarTemp";
 
-export default function Index() {
-  const [nome, setNome] = useState("");
-  const [cpf, setCpf] = useState("");
-  const [email, setEmail] = useState("");
-  const [telefone, setTelefone] = useState("");
-  const [sexo, setSexo] = useState("");
-  const [dataNascimento, setDataNascimento] = useState("");
-  const [senha, setSenha] = useState("");
-  const [confirmarSenha, setConfirmarSenha] = useState("");
+const CARD_WIDTH = 160;
+const CARD_MARGIN = 12;
+const SNAP_INTERVAL = CARD_WIDTH + CARD_MARGIN;
+
+const PETS: Pet[] = [
+  {
+    id: "1",
+    name: "Rai",
+    age: "8 anos",
+    location: "Três Lagoas, MS",
+    imageUri: require("../../assets/images/rai.png"),
+  },
+  {
+    id: "2",
+    name: "Sam",
+    age: "3 meses",
+    location: "Três Lagoas, MS",
+    imageUri: require("../../assets/images/sam.png"),
+  },
+  {
+    id: "3",
+    name: "Felix",
+    age: "5 anos",
+    location: "Três Lagoas, MS",
+    imageUri: require("../../assets/images/felix.jpg"),
+  },
+  {
+    id: "4",
+    name: "Luna",
+    age: "1 ano",
+    location: "Três Lagoas, MS",
+    imageUri: require("../../assets/images/luna.png"),
+  },
+];
+
+export default function HomeScreen() {
+  const flatListRef = useRef<FlatList>(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
+  const insets = useSafeAreaInsets();
+
+  const scrollPrev = () => {
+    const next = Math.max(0, currentIndex - 1);
+    flatListRef.current?.scrollToIndex({ index: next, animated: true });
+    setCurrentIndex(next);
+  };
+
+  const scrollNext = () => {
+    const next = Math.min(PETS.length - 1, currentIndex + 1);
+    flatListRef.current?.scrollToIndex({ index: next, animated: true });
+    setCurrentIndex(next);
+  };
+
+  const isFirst = currentIndex === 0;
+  const isLast = currentIndex === PETS.length - 1;
 
   return (
-    <View className="flex-1 bg-[#F09545]">
-      <Stack.Screen options={{ headerShown: false }} />
-
-      {/* TOP SAFE AREA */}
-      <SafeAreaView edges={["top"]} className="bg-[#FAFCFF] z-10">
-        <Header
-          backgroundColor="#FAFCFF"
-          leftContent={
-            <Pressable
-              onPress={() => setMenuOpen(true)}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel="Abrir menu"
-            >
-              <AntDesign name="menu" size={26} color="black" />
-            </Pressable>
-          }
-          centerContent={
-            <Text className="text-lg font-bold text-[#6B0889]">ADOPET</Text>
-          }
-          rightContent={
-            <View className="flex-row">
-              <TouchableOpacity className="bg-[#080909] p-[10px] m-[5px] rounded-[5px] shadow-lg">
-                <Text className="text-white font-bold">Adotar</Text>
-              </TouchableOpacity>
-            </View>
-          }
-        />
-      </SafeAreaView>
-
-      {/* CONTENT BODY */}
-      <ScrollView
-        className="flex-1 bg-[#F2EFEF]"
-        contentContainerStyle={{ flexGrow: 1, justifyContent: "space-between" }}
-        showsVerticalScrollIndicator={false}
+    <View className="flex-1 bg-[#f8f7f9]">
+      {/* TopBar fora da safe area */}
+      <View
+        className="bg-white border-b border-[#f0f0f0]"
+        style={{ paddingTop: insets.top }}
       >
-        <View className="w-full items-center">
-          {/* ORANGE BANNER */}
-          <View className="w-full h-[195px] bg-[#F09545] items-center justify-center relative overflow-hidden">
-            {/* Top-left Paw */}
-            <View
-              className="absolute top-[8px] left-[4px]"
-              style={{ transform: [{ rotate: "-18deg" }] }}
-            >
-              <Image
-                source={require("../../assets/images/logoLaranja.png")}
-                className="w-[62px] h-[62px]"
-                style={{ width: 62, height: 62 }}
-                resizeMode="contain"
-              />
+        <TopBar
+          onMenuPress={() => setMenuOpen(true)}
+          onAdotarPress={() => console.log("Adotar pressionado")}
+        />
+      </View>
+
+      <ScrollView
+        className="flex-1"
+        showsVerticalScrollIndicator={false}
+        contentContainerClassName="grow"
+      >
+        {/* ── Hero Banner ── */}
+        <ImageBackground
+          source={require("../../assets/images/banner.jpeg")}
+          className="min-h-[140px] flex-row items-center justify-between px-6 py-6 overflow-hidden"
+          resizeMode="cover"
+        >
+          <View className="absolute -bottom-5 -left-5 w-[120px] h-[120px] rounded-full bg-black/[0.06]" />
+          <View className="flex-row items-center gap-3 flex-1">
+            <View className="w-16 h-16 rounded-full bg-white/20 items-center justify-center">
+              <Ionicons name="paw" size={48} color="rgba(255,255,255,0.6)" />
             </View>
-
-            {/* Bottom-left Paw */}
-            <View
-              className="absolute top-[92px] left-[16px]"
-              style={{ transform: [{ rotate: "-12deg" }] }}
-            >
-              <Image
-                source={require("../../assets/images/logoLaranja.png")}
-                className="w-[62px] h-[62px]"
-                style={{ width: 62, height: 62 }}
-                resizeMode="contain"
-              />
-            </View>
-
-            {/* Background Cat Silhouette */}
-            <View className="absolute items-center justify-center top-[18px]">
-              <FontAwesome5 name="cat" size={115} color="#E86F00" />
-            </View>
-
-            {/* Banner Title */}
-            <Text
-              className="text-white text-[22px] font-semibold z-10 mb-[24px]"
-              style={{
-                textShadowColor: "rgba(0, 0, 0, 0.35)",
-                textShadowOffset: { width: 0, height: 1 },
-                textShadowRadius: 3,
-              }}
-            >
-              Cadastre-se na Adopet
-            </Text>
-          </View>
-
-          {/* FORM CARD */}
-          <View className="w-[84%] max-w-[380px] bg-white rounded-[28px] mt-[-45px] mb-[32px] px-[26px] py-[26px] shadow-md border border-[#E2DDDD] border-b-[3px] border-b-[#C8C2C2]">
-            <Input
-              label="Nome completo"
-              placeholder="Digite seu nome"
-              value={nome}
-              onChangeText={setNome}
-            />
-
-            <Input
-              label="CPF"
-              placeholder="Digite seu CPF"
-              value={cpf}
-              onChangeText={setCpf}
-              keyboardType="numeric"
-            />
-
-            <Input
-              label="Email"
-              placeholder="Digite seu e-mail"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-            />
-
-            <Input
-              label="Telefone"
-              placeholder="Digite seu telefone com DDD"
-              value={telefone}
-              onChangeText={setTelefone}
-              keyboardType="phone-pad"
-            />
-
-            <Input
-              label="Sexo"
-              placeholder="Selecione seu sexo"
-              value={sexo}
-              onChangeText={setSexo}
-              options={[
-                "Masculino",
-                "Feminino",
-                "Outro",
-                "Prefiro não informar",
-              ]}
-              rightIcon={<AntDesign name="down" size={14} color="#7A7070" />}
-            />
-
-            <Input
-              label="Data de Nascimento"
-              placeholder="DD/MM/AAAA"
-              value={dataNascimento}
-              onChangeText={setDataNascimento}
-              isDate
-            />
-
-            <Input
-              label="Senha"
-              placeholder="Defina uma senha"
-              value={senha}
-              onChangeText={setSenha}
-              secureTextEntry
-            />
-
-            <Input
-              label="Confirmar senha"
-              placeholder="Confirme sua senha"
-              value={confirmarSenha}
-              onChangeText={setConfirmarSenha}
-              secureTextEntry
-            />
-
-            <Text className="text-[12px] font-bold text-[#1A1A1A] text-center mt-[6px] mb-[20px] leading-[18px]">
-              A senha deve ter no mínimo 8{"\n"}caracteres
-            </Text>
-
-            <View className="items-center">
-              <Button
-                title="Cadastrar"
-                backgroundColor="#262626"
-                textColor="#FFFFFF"
-                onPress={() => router.push("/inicio")}
-              />
+            <View className="flex-1">
+              <Text className="text-[22px] font-extrabold text-white leading-7">
+                Bem vindo à
+              </Text>
+              <Text className="text-[22px] font-extrabold text-white leading-7">
+                Adopet
+              </Text>
             </View>
           </View>
+          <View className="items-end">
+            <Ionicons name="paw" size={36} color="rgba(255,255,255,0.25)" />
+            <Ionicons
+              name="paw"
+              size={24}
+              color="rgba(255,255,255,0.2)"
+              style={{ marginTop: 8, marginLeft: 16 }}
+            />
+          </View>
+        </ImageBackground>
+
+        {/* ── Tagline ── */}
+        <View className="items-center py-6 bg-white">
+          <Text className="text-xl font-extrabold text-[#1a1a1a]">
+            Mude vidas!
+          </Text>
+          <Text className="text-lg font-semibold text-[#1a1a1a] mt-0.5">
+            A sua e a deles
+          </Text>
         </View>
 
-        {/* BOTTOM SAFE AREA */}
-        <SafeAreaView edges={["bottom"]} className="bg-[#6B0889]">
-          <Footer backgroundColor="#6B0889" />
-        </SafeAreaView>
+        {/* ── Carrossel ── */}
+        <View className="pt-4 pb-6 bg-white border-t border-[#f0f0f0]">
+          <View className="flex-row items-center justify-between px-4 mb-3">
+            <Text className="text-[13px] text-[#444] font-medium flex-1 leading-[18px]">
+              Amigos que estão precisando de você
+            </Text>
+            <View className="flex-row gap-1">
+              <TouchableOpacity
+                className={`p-1 ${isFirst ? "opacity-40" : ""}`}
+                onPress={scrollPrev}
+                disabled={isFirst}
+              >
+                <Ionicons
+                  name="chevron-back-circle-outline"
+                  size={28}
+                  color={isFirst ? "#ccc" : "#555"}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity
+                className={`p-1 ${isLast ? "opacity-40" : ""}`}
+                onPress={scrollNext}
+                disabled={isLast}
+              >
+                <Ionicons
+                  name="chevron-forward-circle-outline"
+                  size={28}
+                  color={isLast ? "#ccc" : "#555"}
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <FlatList
+            ref={flatListRef}
+            data={PETS}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <PetCard pet={item} onPress={(pet) => console.log("Pet:", pet.name)} />
+            )}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerClassName="px-4 pb-1"
+            snapToInterval={SNAP_INTERVAL}
+            decelerationRate="fast"
+            snapToAlignment="start"
+            onMomentumScrollEnd={(e) => {
+              const index = Math.round(
+                e.nativeEvent.contentOffset.x / SNAP_INTERVAL
+              );
+              setCurrentIndex(index);
+            }}
+          />
+        </View>
+
+        {/* ── Seção Doação ── */}
+        <View className="items-center py-8 px-6 bg-[#f8f7f9] gap-5">
+          <Text className="text-lg font-extrabold text-[#1a1a1a] text-center leading-[26px]">
+            Valorize a adoção{"\n"}responsável
+          </Text>
+
+          <View className="w-40 h-40 rounded-2xl bg-[#e8e8e8] items-center justify-center">
+            <Ionicons name="paw" size={56} color="#ccc" />
+          </View>
+
+          <TouchableOpacity
+            className="bg-[#7B2FBE] px-10 py-3.5 rounded-[30px]"
+            onPress={() => console.log("Doar pet")}
+          >
+            <Text className="text-white font-bold text-base">Doar pet</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* ── Footer no scroll ── */}
+        <Footer />
+        <View style={{ height: insets.bottom }} />
       </ScrollView>
 
       {/* Menu lateral */}

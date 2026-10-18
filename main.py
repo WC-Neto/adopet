@@ -57,7 +57,7 @@ class ItemMenu(BaseModel):
 
 
 MENU_ITENS: List[ItemMenu] = [
-    ItemMenu(label="Início", rota="/inicio"),
+    ItemMenu(label="Início", rota="/"),
     ItemMenu(label="Adotar", rota="/adotar"),
     ItemMenu(label="Doar", rota="/doar"),
     ItemMenu(label="Minha conta", rota="/conta"),
