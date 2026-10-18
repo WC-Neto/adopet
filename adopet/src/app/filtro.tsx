@@ -145,7 +145,6 @@ export default function Filtro() {
     <View className="flex-1 bg-[#F09545]">
       <Stack.Screen options={{ headerShown: false }} />
 
-      {/* TOP SAFE AREA */}
       <SafeAreaView edges={["top"]} className="bg-[#FAFCFF] z-10">
         <Header
           backgroundColor="#FAFCFF"
@@ -156,7 +155,6 @@ export default function Filtro() {
         />
       </SafeAreaView>
 
-      {/* CONTENT BLOCK */}
       <View className="flex-1 overflow-hidden">
         {/* patinhas grandes do fundo, ficam atras do card */}
         <Image
@@ -270,7 +268,7 @@ export default function Filtro() {
         </View>
       </View>
 
-      {/* so respeita a area segura de baixo, sem footer (o Figma nao tem) */}
+      {/* so respeita a area segura de baixo */}
       <SafeAreaView edges={["bottom"]} className="bg-[#F09545]" />
     </View>
   );
