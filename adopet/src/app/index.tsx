@@ -1,6 +1,14 @@
 import { useState } from "react";
-import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import {
+  Image,
+  Platform,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Constants from "expo-constants";
 import Footer from "../components/Footers/Footer";
 import Header from "../components/Headers/Header";
 import Input from "../components/Inputs/Input";
@@ -9,18 +17,114 @@ import { Stack, router } from "expo-router";
 import AntDesign from "@expo/vector-icons/build/AntDesign";
 import { FontAwesome5 } from "@expo/vector-icons";
 
+const debuggerHost = Constants.expoConfig?.hostUri?.split(":")[0];
+const API_URL =
+  Platform.OS === "web"
+    ? "http://127.0.0.1:8000"
+    : debuggerHost
+    ? `http://${debuggerHost}:8000`
+    : "http://192.168.1.179:8000";
+
+const UF_OPTIONS = [
+  "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO",
+  "MA", "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI",
+  "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO",
+];
+
 export default function Index() {
   const [nome, setNome] = useState("");
   const [cpf, setCpf] = useState("");
   const [email, setEmail] = useState("");
   const [telefone, setTelefone] = useState("");
+  const [cidade, setCidade] = useState("");
+  const [uf, setUf] = useState("");
   const [sexo, setSexo] = useState("");
   const [dataNascimento, setDataNascimento] = useState("");
   const [senha, setSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
+  const [erro, setErro] = useState("");
+  const [carregando, setCarregando] = useState(false);
+
+  const handleCadastrar = async () => {
+    setErro("");
+
+    if (
+      !nome.trim() ||
+      !cpf.trim() ||
+      !email.trim() ||
+      !telefone.trim() ||
+      !cidade.trim() ||
+      !uf.trim() ||
+      !senha
+    ) {
+      setErro("Preencha todos os campos obrigatórios.");
+      return;
+    }
+
+    const cpfNumeros = cpf.replace(/\D/g, "");
+    if (cpfNumeros.length !== 11) {
+      setErro("O CPF deve conter 11 dígitos numéricos.");
+      return;
+    }
+
+    if (senha.length < 8) {
+      setErro("A senha deve ter no mínimo 8 caracteres.");
+      return;
+    }
+
+    if (senha !== confirmarSenha) {
+      setErro("As senhas não coincidem.");
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    try {
+      setCarregando(true);
+      const response = await fetch(`${API_URL}/usuarios`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        signal: controller.signal,
+        body: JSON.stringify({
+          nome: nome.trim(),
+          cpf: cpfNumeros,
+          email: email.trim(),
+          telefone: telefone.replace(/\D/g, ""),
+          cidade: cidade.trim(),
+          uf: uf.trim().toUpperCase(),
+          sexo,
+          data_nascimento: dataNascimento,
+          senha,
+        }),
+      });
+
+      clearTimeout(timeoutId);
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        setErro(data?.detail || "Erro ao realizar o cadastro.");
+        return;
+      }
+
+      router.push("/inicio");
+    } catch {
+      clearTimeout(timeoutId);
+      setErro(
+        "Não foi possível conectar ao servidor FastAPI (127.0.0.1:8000). Verifique se o uvicorn está rodando."
+      );
+    } finally {
+      setCarregando(false);
+    }
+  };
 
   return (
-    <View className="flex-1 bg-[#F09545]">
+    <View
+      className="flex-1 h-full min-h-0 overflow-hidden bg-[#F09545]"
+      style={{ flex: 1, height: "100%" }}
+    >
       <Stack.Screen options={{ headerShown: false }} />
 
       {/* TOP SAFE AREA */}
@@ -45,9 +149,10 @@ export default function Index() {
       
       {/* CONTENT BODY */}
       <ScrollView
-        className="flex-1 bg-[#F2EFEF]"
+        className="flex-1 basis-0 min-h-0 overflow-y-auto bg-[#F2EFEF]"
+        style={{ flex: 1, flexBasis: 0 }}
         contentContainerStyle={{ flexGrow: 1, justifyContent: "space-between" }}
-        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         <View className="w-full items-center">
           {/* ORANGE BANNER */}
@@ -130,6 +235,22 @@ export default function Index() {
             />
 
             <Input
+              label="Cidade"
+              placeholder="Digite sua cidade"
+              value={cidade}
+              onChangeText={setCidade}
+            />
+
+            <Input
+              label="UF"
+              placeholder="Selecione seu estado (UF)"
+              value={uf}
+              onChangeText={setUf}
+              options={UF_OPTIONS}
+              rightIcon={<AntDesign name="down" size={14} color="#7A7070" />}
+            />
+
+            <Input
               label="Sexo"
               placeholder="Selecione seu sexo"
               value={sexo}
@@ -171,12 +292,18 @@ export default function Index() {
               A senha deve ter no mínimo 8{"\n"}caracteres
             </Text>
 
+            {erro ? (
+              <Text className="text-[13px] font-semibold text-[#D92D20] text-center mb-[14px]">
+                {erro}
+              </Text>
+            ) : null}
+
             <View className="items-center">
               <Button
-                title="Cadastrar"
+                title={carregando ? "Cadastrando..." : "Cadastrar"}
                 backgroundColor="#262626"
                 textColor="#FFFFFF"
-                onPress={() => router.push("/inicio")}
+                onPress={handleCadastrar}
               />
             </View>
           </View>
