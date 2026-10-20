@@ -7,13 +7,24 @@ import {
   ScrollView,
   Image,
   Alert,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Stack } from "expo-router";
+import { Stack, router } from "expo-router";
+import Constants from "expo-constants";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import Header from "../components/Headers/Header";
 import Footer from "../components/Footers/Footer";
+
+// endereco da api
+const debuggerHost = Constants.expoConfig?.hostUri?.split(":")[0];
+const API_URL =
+  Platform.OS === "web"
+    ? "http://127.0.0.1:8000"
+    : debuggerHost
+      ? `http://${debuggerHost}:8000`
+      : "http://192.168.1.179:8000";
 
 // opcoes dos selects
 const especies = ["Cachorro", "Gato", "Outro"];
@@ -21,7 +32,7 @@ const portes = ["Pequeno", "Médio", "Grande"];
 const sexos = ["Macho", "Fêmea"];
 
 export default function CadastroPet() {
-  // campos do formulario
+  // dados do formulario
   const [nome, setNome] = useState("");
   const [apelido, setApelido] = useState("");
   const [especie, setEspecie] = useState("");
@@ -31,12 +42,15 @@ export default function CadastroPet() {
   const [idadeDesconhecida, setIdadeDesconhecida] = useState(false);
   const [foto, setFoto] = useState<string | null>(null);
 
-  // controla se o select ta aberto ou fechado
+  // pra abrir/fechar os selects
   const [abrirEspecie, setAbrirEspecie] = useState(false);
   const [abrirPorte, setAbrirPorte] = useState(false);
   const [abrirSexo, setAbrirSexo] = useState(false);
 
-  // abre a galeria pra escolher foto
+  const [erro, setErro] = useState("");
+  const [carregando, setCarregando] = useState(false);
+
+  // escolhe foto da galeria
   const escolherFoto = async () => {
     const permissao = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
@@ -54,6 +68,80 @@ export default function CadastroPet() {
 
     if (!resultado.canceled) {
       setFoto(resultado.assets[0].uri);
+    }
+  };
+
+  // salva o pet na api
+  const handleContinuar = async () => {
+    setErro("");
+
+    if (!nome.trim() || !especie || !porte || !sexo) {
+      setErro("Preencha nome, espécie, porte e sexo.");
+      return;
+    }
+
+    if (!foto) {
+      setErro("Escolha uma foto do pet.");
+      return;
+    }
+
+    if (!idadeDesconhecida && !dataNascimento.trim()) {
+      setErro("Informe a data ou marque que não sabe a idade.");
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+    try {
+      setCarregando(true);
+
+      const response = await fetch(`${API_URL}/animais`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        signal: controller.signal,
+        body: JSON.stringify({
+          nome: nome.trim(),
+          apelido: apelido.trim() || null,
+          foto_url: foto,
+          especie,
+          porte,
+          sexo,
+          dt_nascimento: idadeDesconhecida ? null : dataNascimento.trim(),
+        }),
+      });
+
+      clearTimeout(timeoutId);
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        const detalhe = data?.detail;
+        setErro(
+          typeof detalhe === "string"
+            ? detalhe
+            : "Erro ao cadastrar o pet."
+        );
+        return;
+      }
+
+      // cadastrou, vai pra inicio
+      router.push("/inicio");
+    } catch (e: any) {
+      clearTimeout(timeoutId);
+      // se demorar muito provavelmente e o banco
+      if (e?.name === "AbortError") {
+        setErro(
+          "A API demorou demais. Confira se o PostgreSQL está ligado e a senha no backend/.env."
+        );
+      } else {
+        setErro(
+          "Não foi possível conectar ao servidor FastAPI (127.0.0.1:8000). Verifique se o uvicorn está rodando."
+        );
+      }
+    } finally {
+      setCarregando(false);
     }
   };
 
@@ -277,12 +365,22 @@ export default function CadastroPet() {
             </View>
           </TouchableOpacity>
 
+          {erro ? (
+            <Text className="text-[13px] font-semibold text-[#D92D20] text-center mb-[14px]">
+              {erro}
+            </Text>
+          ) : null}
+
           {/* botao continuar */}
           <TouchableOpacity
             className="bg-[#2C2C2C] rounded-[24px] py-[14px] items-center"
             activeOpacity={0.8}
+            onPress={handleContinuar}
+            disabled={carregando}
           >
-            <Text className="text-white text-[16px] font-bold">Continuar →</Text>
+            <Text className="text-white text-[16px] font-bold">
+              {carregando ? "Salvando..." : "Continuar →"}
+            </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
