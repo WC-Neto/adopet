@@ -8,14 +8,14 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { Stack } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { router, Stack } from "expo-router";
 
 import Footer from "../components/Footers/Footer";
 import PetCard, { Pet } from "../components/PetCard";
-import SideMenu from "../components/SideMenu/SideMenu";
-import Header from "../components/Headers/Header"; 
+import Header from "../components/Headers/Header";
 
+// Restaurando as constantes necessárias para o carrossel e o array PETS
 const CARD_WIDTH = 160;
 const CARD_MARGIN = 12;
 const SNAP_INTERVAL = CARD_WIDTH + CARD_MARGIN;
@@ -54,9 +54,8 @@ const PETS: Pet[] = [
 export default function HomeScreen() {
   const flatListRef = useRef<FlatList>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const insets = useSafeAreaInsets();
 
+  // Restaurando a lógica original de rolagem do carrossel
   const scrollPrev = () => {
     const next = Math.max(0, currentIndex - 1);
     flatListRef.current?.scrollToIndex({ index: next, animated: true });
@@ -76,13 +75,8 @@ export default function HomeScreen() {
     <View className="flex-1 bg-[#f8f7f9]">
       <Stack.Screen options={{ headerShown: false }} />
 
-      {/* ── Header na SafeArea de cima ── */}
       <SafeAreaView edges={["top"]} className="bg-white z-10">
-        <Header
-          backgroundColor="white"
-          onMenuPress={() => setMenuOpen(true)}
-          onAdotarPress={() => console.log("Adotar pressionado")}
-        />
+        <Header backgroundColor="white" />
       </SafeAreaView>
 
       <ScrollView
@@ -197,20 +191,16 @@ export default function HomeScreen() {
 
           <TouchableOpacity
             className="bg-[#7B2FBE] px-10 py-3.5 rounded-[30px]"
-            onPress={() => console.log("Doar pet")}
+            onPress={() => router.push('/doar')}
           >
             <Text className="text-white font-bold text-base">Doar pet</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
 
-      {/* ── Footer na SafeArea de baixo ── */}
       <SafeAreaView edges={["bottom"]} className="bg-[#6B0889]">
         <Footer backgroundColor="#6B0889" />
       </SafeAreaView>
-
-      {/* ── Menu lateral ── */}
-      <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
     </View>
   );
 }
