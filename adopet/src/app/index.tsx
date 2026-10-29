@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { router, type Href } from "expo-router";
 import { useRef, useState } from "react";
 import {
   FlatList,
@@ -9,7 +10,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Footer from "../components/Footer";
+import Footer from "../components/Footers/Footer";
 import PetCard, { Pet } from "../components/PetCard";
 import SideMenu from "../components/SideMenu/SideMenu";
 import TopBar from "../components/TopbarTemp";
@@ -195,14 +196,14 @@ export default function HomeScreen() {
 
           <TouchableOpacity
             className="bg-[#7B2FBE] px-10 py-3.5 rounded-[30px]"
-            onPress={() => console.log("Doar pet")}
+            onPress={() => router.push("/cadastro-pet" as Href)}
           >
             <Text className="text-white font-bold text-base">Doar pet</Text>
           </TouchableOpacity>
         </View>
 
         {/* ── Footer no scroll ── */}
-        <Footer />
+        <Footer backgroundColor="#6B0889" />
         <View style={{ height: insets.bottom }} />
       </ScrollView>
 
