@@ -162,7 +162,7 @@ export default function HomeScreen() {
             data={PETS}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
-              <PetCard pet={item} onPress={(pet) => console.log("Pet:", pet.name)} />
+              <PetCard pet={item} onPress={(pet) => router.push({pathname: "/pet-detalhes", params: { nome: pet.name },})}/>
             )}
             horizontal
             showsHorizontalScrollIndicator={false}
