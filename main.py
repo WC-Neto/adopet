@@ -69,3 +69,47 @@ MENU_ITENS: List[ItemMenu] = [
 @app.get("/menu", response_model=List[ItemMenu])
 def listar_itens_menu():
     return MENU_ITENS
+
+# ---------- Perfil do usuário ----------
+class PetPerfil(BaseModel):
+    id: int
+    nome: str
+    sexo: str  # "M" ou "F"
+    idade: str
+    localizacao: str
+    foto: str  # chave da foto no front (ex.: "rai")
+    status: Optional[str] = None  # "Disponível" ou "Adotada" (só em meus_pets)
+
+
+class UsuarioPerfil(BaseModel):
+    nome_usuario: str
+    email: str
+    telefone: str
+    cidade: str
+    data_nascimento: str
+    meus_pets: List[PetPerfil]
+    favoritos: List[PetPerfil]
+
+
+# Usuário "logado" de exemplo (sem autenticação por enquanto)
+USUARIO_LOGADO = UsuarioPerfil(
+    nome_usuario="Usuario_Silva",
+    email="emailusuario@gmail.com",
+    telefone="(12) 34567-8910",
+    cidade="Três Lagoas, MS",
+    data_nascimento="27/10/2026",
+    meus_pets=[
+        PetPerfil(id=1, nome="Thor", sexo="M", idade="5 anos", localizacao="Três Lagoas, MS", foto="luna", status="Disponível"),
+        PetPerfil(id=2, nome="Joe", sexo="M", idade="9 anos", localizacao="Três Lagoas, MS", foto="joe", status="Adotada"),
+    ],
+    favoritos=[
+        PetPerfil(id=3, nome="Jana", sexo="F", idade="1 ano", localizacao="Três Lagoas, MS", foto="jana"),
+        PetPerfil(id=4, nome="Sam", sexo="M", idade="3 meses", localizacao="Três Lagoas, MS", foto="sam"),
+        PetPerfil(id=5, nome="Rai", sexo="M", idade="8 anos", localizacao="Três Lagoas, MS", foto="rai"),
+    ],
+)
+
+
+@app.get("/usuarios/me", response_model=UsuarioPerfil)
+def obter_usuario_logado():
+    return USUARIO_LOGADO
