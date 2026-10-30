@@ -1,0 +1,1 @@
+"""Backend PostgreSQL do Adopet."""

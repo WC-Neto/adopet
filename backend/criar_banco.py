@@ -11,12 +11,13 @@ HOST = os.environ.get('PGHOST')
 PORT = os.environ.get('PGPORT')
 USER = os.environ.get('PGUSER')
 SENHA = os.environ.get('PGPASSWORD')
-BANCO = 'adopet'
+BANCO = os.environ.get('PGDATABASE', 'adopet')
 
+# Abre uma conexão com o PostgreSQL.
 def conectar(banco: str, **opcoes) -> psycopg.Connection:
     return psycopg.connect(host=HOST, port=PORT, user=USER, password=SENHA, dbname=banco, **opcoes)
 
-# cria banco se ainda não existir
+# Cria o banco se ele ainda não existir.
 with conectar('postgres', autocommit=True) as conn:
     exists = conn.execute('SELECT 1 FROM pg_database WHERE datname=%s', (BANCO,)).fetchone()
     if exists: 
@@ -25,7 +26,7 @@ with conectar('postgres', autocommit=True) as conn:
         conn.execute(f'CREATE DATABASE "{BANCO}"')
         print(f"Banco {BANCO} criado.")
 
-# criar e inserir dados nas tabelas        
+# Prepara as tabelas e os dados iniciais.
 with conectar(BANCO) as conn:
     for script in ('tables.sql', 'dados_exemplos.sql'):
         conn.execute((PATH / script).read_text(encoding='utf-8'))

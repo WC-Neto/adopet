@@ -1,29 +1,19 @@
 import { useState } from "react";
 import {
   Image,
-  Platform,
   ScrollView,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Constants from "expo-constants";
 import Footer from "../components/Footers/Footer";
 import Header from "../components/Headers/Header";
 import Input from "../components/Inputs/Input";
 import Button from "../components/Buttons/Button";
 import { Stack, router } from "expo-router";
-import AntDesign from "@expo/vector-icons/build/AntDesign";
 import { useAuth } from "../context/AuthContext";
-
-const debuggerHost = Constants.expoConfig?.hostUri?.split(":")[0];
-const API_URL =
-  Platform.OS === "web"
-    ? "http://127.0.0.1:8000"
-    : debuggerHost
-    ? `http://${debuggerHost}:8000`
-    : "http://192.168.1.179:8000";
+import { API_URL } from "../services/api";
 
 export default function Login() {
   const { setUsuario } = useAuth();
@@ -84,25 +74,17 @@ export default function Login() {
     >
       <Stack.Screen options={{ headerShown: false }} />
 
-      {/* TOP SAFE AREA */}
+      {/* Área superior */}
       <SafeAreaView edges={["top"]} className="bg-[#FAFCFF] z-10">
         <Header
           backgroundColor="#FAFCFF"
-          leftContent={<AntDesign name="menu" size={26} color="black" />}
           centerContent={
             <Text className="text-lg font-bold text-[#6B0889]">ADOPET</Text>
-          }
-          rightContent={
-            <View className="flex-row">
-              <TouchableOpacity className="bg-[#080909] p-[10px] m-[5px] rounded-[5px] shadow-lg">
-                <Text className="text-white font-bold">Adotar</Text>
-              </TouchableOpacity>
-            </View>
           }
         />
       </SafeAreaView>
 
-      {/* CONTENT BODY */}
+      {/* Conteúdo */}
       <ScrollView
         className="flex-1 basis-0 min-h-0 overflow-y-auto bg-[#F2EFEF]"
         style={{ flex: 1, flexBasis: 0 }}
@@ -110,9 +92,9 @@ export default function Login() {
         keyboardShouldPersistTaps="handled"
       >
         <View className="w-full items-center">
-          {/* ORANGE BANNER */}
+          {/* Faixa laranja */}
           <View className="w-full h-[195px] bg-[#F09545] items-center justify-center relative overflow-hidden">
-            {/* Top-left Paw */}
+            {/* Pata superior esquerda */}
             <View
               className="absolute top-[6px] left-[45px]"
               style={{ transform: [{ rotate: "-22deg" }] }}
@@ -125,7 +107,7 @@ export default function Login() {
               />
             </View>
 
-            {/* Bottom-left Paw 1 */}
+            {/* Pata inferior esquerda 1 */}
             <View
               className="absolute top-[98px] left-[-10px]"
               style={{ transform: [{ rotate: "-18deg" }] }}
@@ -138,7 +120,7 @@ export default function Login() {
               />
             </View>
 
-            {/* Bottom-left Paw 2 */}
+            {/* Pata inferior esquerda 2 */}
             <View
               className="absolute top-[92px] left-[68px]"
               style={{ transform: [{ rotate: "-12deg" }] }}
@@ -151,7 +133,7 @@ export default function Login() {
               />
             </View>
 
-            {/* Top-right Paw 1 */}
+            {/* Pata superior direita 1 */}
             <View
               className="absolute top-[-4px] right-[55px]"
               style={{ transform: [{ rotate: "-25deg" }] }}
@@ -164,7 +146,7 @@ export default function Login() {
               />
             </View>
 
-            {/* Top-right Paw 2 */}
+            {/* Pata superior direita 2 */}
             <View
               className="absolute top-[12px] right-[-18px]"
               style={{ transform: [{ rotate: "-20deg" }] }}
@@ -177,7 +159,7 @@ export default function Login() {
               />
             </View>
 
-            {/* Bottom-right Paw */}
+            {/* Pata inferior direita */}
             <View
               className="absolute top-[86px] right-[32px]"
               style={{ transform: [{ rotate: "160deg" }] }}
@@ -190,7 +172,7 @@ export default function Login() {
               />
             </View>
 
-            {/* Banner Title */}
+            {/* Título */}
             <Text
               className="text-white text-[22px] font-semibold z-10 mb-[24px]"
               style={{
@@ -203,7 +185,7 @@ export default function Login() {
             </Text>
           </View>
 
-          {/* FORM CARD */}
+          {/* Formulário */}
           <View className="w-[84%] max-w-[380px] bg-white rounded-[28px] mt-[-45px] mb-[32px] px-[34px] py-[32px] shadow-md border border-[#E2DDDD] border-b-[3px] border-b-[#C8C2C2]">
             <Input
               label="Email"
@@ -258,7 +240,7 @@ export default function Login() {
           </View>
         </View>
 
-        {/* BOTTOM SAFE AREA */}
+        {/* Área inferior */}
         <SafeAreaView edges={["bottom"]} className="bg-[#6B0889]">
           <Footer backgroundColor="#6B0889" />
         </SafeAreaView>

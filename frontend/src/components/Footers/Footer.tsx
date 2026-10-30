@@ -15,9 +15,7 @@ export default function Footer({
       <View className="flex-row items-center">
         <Text className="text-[26px] font-bold text-white">ADOPET</Text>
 
-        {/*Essa pata aqui é sagrada e é a razão de eu viver, 
-                se ela for retirada eu vou morrer 
-                e amaldiçoar todos nesse grupo */}
+        {/* Pata decorativa */}
         <Image
           source={require("../../../assets/images/logo2.png")}
           className="w-[40px] h-[40px] ml-[10px]"
@@ -25,7 +23,7 @@ export default function Footer({
         />
       </View>
 
-      {/* Socials */}
+      {/* Redes sociais */}
       <View className="flex-row justify-start gap-[12px] mt-[12px] pb-[2px] items-center">
         <TouchableOpacity>
           <Entypo name="facebook" size={14} color="white" />

@@ -173,7 +173,7 @@ export default function Input({
 
           {isCalendarOpen && (
             <View className="bg-[#F5EDED] border border-[#9E9595] rounded-[18px] mt-[6px] p-[12px] shadow-sm">
-              {/* Year Navigation */}
+              {/* Navegação por ano */}
               <View className="flex-row items-center justify-between mb-[6px] px-[8px]">
                 <TouchableOpacity
                   onPress={() => setViewYear((y) => y - 1)}
@@ -192,7 +192,7 @@ export default function Input({
                 </TouchableOpacity>
               </View>
 
-              {/* Month Navigation */}
+              {/* Navegação por mês */}
               <View className="flex-row items-center justify-between mb-[10px] px-[8px]">
                 <TouchableOpacity onPress={handlePrevMonth} className="p-[4px]">
                   <AntDesign name="left" size={13} color="#080909" />
@@ -205,7 +205,7 @@ export default function Input({
                 </TouchableOpacity>
               </View>
 
-              {/* Weekdays Header */}
+              {/* Dias da semana */}
               <View className="flex-row justify-between mb-[4px]">
                 {WEEKDAYS.map((dayLabel, idx) => (
                   <View
@@ -219,7 +219,7 @@ export default function Input({
                 ))}
               </View>
 
-              {/* Days Grid */}
+              {/* Dias do calendário */}
               <View className="flex-row flex-wrap">
                 {calendarCells.map((day, idx) => {
                   const formattedCell =

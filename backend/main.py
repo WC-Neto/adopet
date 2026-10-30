@@ -1,6 +1,4 @@
-# API do Adopet (Usuários e Animais)
-# rodar: uvicorn main:app --reload --host 0.0.0.0 --port 8000
-
+# API do Adopet.
 import hashlib
 import os
 import re
@@ -12,19 +10,28 @@ import psycopg
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 PATH = Path(__file__).resolve().parent
-for env_candidate in (PATH.parent / ".env", PATH / ".env"):
-    if env_candidate.exists():
-        load_dotenv(env_candidate)
-        break
+FOTOS_DIR = PATH / "fotos"
+FOTOS_DIR.mkdir(exist_ok=True)
+
+load_dotenv(PATH.parent / ".env")
+load_dotenv(PATH / ".env", override=True)
 
 HOST = os.environ.get("PGHOST", "localhost")
 PORT = os.environ.get("PGPORT", "5432")
 USER = os.environ.get("PGUSER", "postgres")
 SENHA = os.environ.get("PGPASSWORD", "")
-BANCO = "adopet"
+BANCO = os.environ.get("PGDATABASE", "adopet")
+
+COLUNAS_ANIMAL = """
+    id_animal, nome, foto_url, especie, porte, sexo, dt_nascimento,
+    castrado, vacinas, vermifugado, condicao_especial,
+    medicamento_continuo, historico_saude, microchipado, historia,
+    motivo_doacao, personalidade, cidade, uf, situacao, id_responsavel
+"""
 
 
 def conectar(banco: str = BANCO, **opcoes) -> psycopg.Connection:
@@ -48,6 +55,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.mount("/fotos", StaticFiles(directory=FOTOS_DIR), name="fotos")
 
 
 class UsuarioCreate(BaseModel):
@@ -90,8 +98,8 @@ class AnimalCreate(BaseModel):
     foto_url: str
     especie: str
     porte: str
-    sexo: str  # Macho/Femea ou M/F
-    dt_nascimento: Optional[str] = None  # DD/MM/AAAA
+    sexo: str
+    dt_nascimento: Optional[str] = None
     apelido: Optional[str] = None
     cidade: str = "Três Lagoas"
     uf: str = "MS"
@@ -106,10 +114,46 @@ class AnimalResponse(BaseModel):
     porte: str
     sexo: str
     dt_nascimento: Optional[date] = None
+    castrado: bool = False
+    vacinas: Optional[str] = None
+    vermifugado: bool = False
+    condicao_especial: bool = False
+    medicamento_continuo: bool = False
+    historico_saude: Optional[str] = None
+    microchipado: bool = False
+    historia: Optional[str] = None
+    motivo_doacao: Optional[str] = None
+    personalidade: Optional[str] = None
     cidade: str
     uf: str
     situacao: str
     id_responsavel: int
+
+
+def resposta_animal(linha) -> AnimalResponse:
+    return AnimalResponse(
+        id_animal=linha[0],
+        nome=linha[1],
+        foto_url=linha[2],
+        especie=linha[3],
+        porte=linha[4],
+        sexo=linha[5],
+        dt_nascimento=linha[6],
+        castrado=linha[7],
+        vacinas=linha[8],
+        vermifugado=linha[9],
+        condicao_especial=linha[10],
+        medicamento_continuo=linha[11],
+        historico_saude=linha[12],
+        microchipado=linha[13],
+        historia=linha[14],
+        motivo_doacao=linha[15],
+        personalidade=linha[16],
+        cidade=linha[17],
+        uf=linha[18],
+        situacao=linha[19],
+        id_responsavel=linha[20],
+    )
 
 
 def converter_sexo(sexo: str) -> str:
@@ -372,29 +416,41 @@ def listar_animais():
     try:
         with conectar(BANCO) as conn:
             linhas = conn.execute(
-                """
-                SELECT id_animal, nome, foto_url, especie, porte, sexo,
-                       dt_nascimento, cidade, uf, situacao, id_responsavel
+                f"""
+                SELECT {COLUNAS_ANIMAL}
                 FROM animal
+                WHERE situacao = 'Disponível'
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM adocao
+                      WHERE adocao.id_animal = animal.id_animal
+                        AND adocao.situacao IN ('Pendente', 'Aprovada')
+                  )
                 ORDER BY id_animal
                 """
             ).fetchall()
-            return [
-                AnimalResponse(
-                    id_animal=r[0],
-                    nome=r[1],
-                    foto_url=r[2],
-                    especie=r[3],
-                    porte=r[4],
-                    sexo=r[5],
-                    dt_nascimento=r[6],
-                    cidade=r[7],
-                    uf=r[8],
-                    situacao=r[9],
-                    id_responsavel=r[10],
-                )
-                for r in linhas
-            ]
+            return [resposta_animal(linha) for linha in linhas]
+    except psycopg.Error as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erro ao consultar o PostgreSQL: {e}",
+        )
+
+
+@app.get("/animais/{id_animal}", response_model=AnimalResponse)
+def buscar_animal(id_animal: int):
+    try:
+        with conectar(BANCO) as conn:
+            linha = conn.execute(
+                f"SELECT {COLUNAS_ANIMAL} FROM animal WHERE id_animal = %s",
+                (id_animal,),
+            ).fetchone()
+
+        if linha is None:
+            raise HTTPException(status_code=404, detail="Pet não encontrado.")
+        return resposta_animal(linha)
+    except HTTPException:
+        raise
     except psycopg.Error as e:
         raise HTTPException(
             status_code=500,

@@ -7,34 +7,24 @@ import {
   ScrollView,
   Image,
   Alert,
-  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, router } from "expo-router";
-import Constants from "expo-constants";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import Header from "../components/Headers/Header";
 import Footer from "../components/Footers/Footer";
 import { useAuth } from "../context/AuthContext";
+import { API_URL } from "../services/api";
 
-// endereco da api
-const debuggerHost = Constants.expoConfig?.hostUri?.split(":")[0];
-const API_URL =
-  Platform.OS === "web"
-    ? "http://127.0.0.1:8000"
-    : debuggerHost
-      ? `http://${debuggerHost}:8000`
-      : "http://192.168.1.179:8000";
-
-// opcoes dos selects
+// Opções dos campos de seleção.
 const especies = ["Cachorro", "Gato", "Outro"];
 const portes = ["Pequeno", "Médio", "Grande"];
 const sexos = ["Macho", "Fêmea"];
 
 export default function CadastroPet() {
   const { usuario } = useAuth();
-  // dados do formulario
+  // Dados do pet.
   const [nome, setNome] = useState("");
   const [apelido, setApelido] = useState("");
   const [especie, setEspecie] = useState("");
@@ -44,7 +34,7 @@ export default function CadastroPet() {
   const [idadeDesconhecida, setIdadeDesconhecida] = useState(false);
   const [foto, setFoto] = useState<string | null>(null);
 
-  // pra abrir/fechar os selects
+  // Estado dos seletores.
   const [abrirEspecie, setAbrirEspecie] = useState(false);
   const [abrirPorte, setAbrirPorte] = useState(false);
   const [abrirSexo, setAbrirSexo] = useState(false);
@@ -52,7 +42,7 @@ export default function CadastroPet() {
   const [erro, setErro] = useState("");
   const [carregando, setCarregando] = useState(false);
 
-  // escolhe foto da galeria
+  // Abre a galeria para escolher uma foto.
   const escolherFoto = async () => {
     const permissao = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
@@ -73,7 +63,7 @@ export default function CadastroPet() {
     }
   };
 
-  // salva o pet na api
+  // Valida e envia o cadastro do pet.
   const handleContinuar = async () => {
     setErro("");
 
@@ -129,11 +119,9 @@ export default function CadastroPet() {
         return;
       }
 
-      // cadastrou, vai pra inicio
       router.push("/inicio");
     } catch (e: any) {
       clearTimeout(timeoutId);
-      // se demorar muito provavelmente e o banco
       if (e?.name === "AbortError") {
         setErro(
           "A API demorou demais. Confira se o PostgreSQL está ligado e a senha no backend/.env."
@@ -152,26 +140,18 @@ export default function CadastroPet() {
     <View className="flex-1 bg-[#E8E8E8]">
       <Stack.Screen options={{ headerShown: false }} />
 
-      {/* header */}
+      {/* Cabeçalho */}
       <SafeAreaView edges={["top"]} className="bg-[#FAFCFF] z-10">
         <Header
           backgroundColor="#FAFCFF"
-          leftContent={<AntDesign name="menu" size={26} color="black" />}
           centerContent={
             <Text className="text-lg font-bold text-[#6B0889]">ADOPET</Text>
-          }
-          rightContent={
-            <View className="flex-row">
-              <TouchableOpacity className="bg-[#080909] p-[10px] m-[5px] rounded-[5px] shadow-lg">
-                <Text className="text-white font-bold">Adotar</Text>
-              </TouchableOpacity>
-            </View>
           }
         />
       </SafeAreaView>
 
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 24 }}>
-        {/* parte laranja de cima */}
+        {/* Apresentação */}
         <View className="bg-[#F09545] px-[20px] pt-[24px] pb-[60px] items-center justify-center relative overflow-hidden">
           <Image
             source={require("../../assets/images/logoLaranja.png")}
@@ -188,13 +168,12 @@ export default function CadastroPet() {
           </Text>
         </View>
 
-        {/* formulario */}
+        {/* Formulário */}
         <View className="mx-[16px] mt-[-40px] bg-white rounded-[16px] p-[20px] shadow-lg">
           <Text className="text-[#6B0889] text-[20px] font-bold mb-[16px]">
             Informações básicas do pet
           </Text>
 
-          {/* nome */}
           <Text className="text-[#333] text-[14px] mb-[6px]">Nome</Text>
           <TextInput
             className="bg-[#F3F0F0] rounded-[20px] px-[16px] py-[12px] mb-[14px] text-[#333]"
@@ -204,7 +183,6 @@ export default function CadastroPet() {
             onChangeText={setNome}
           />
 
-          {/* area pra escolher foto */}
           <Text className="text-[#333] text-[14px] mb-[6px]">Fotos/ vídeos</Text>
           <TouchableOpacity
             className="bg-[#D9D9D9] rounded-[12px] h-[160px] mb-[14px] items-center justify-center overflow-hidden"
@@ -225,7 +203,6 @@ export default function CadastroPet() {
             )}
           </TouchableOpacity>
 
-          {/* apelido */}
           <Text className="text-[#333] text-[14px] mb-[6px]">Apelido</Text>
           <TextInput
             className="bg-[#F3F0F0] rounded-[20px] px-[16px] py-[12px] mb-[14px] text-[#333]"
@@ -235,7 +212,6 @@ export default function CadastroPet() {
             onChangeText={setApelido}
           />
 
-          {/* especie */}
           <Text className="text-[#333] text-[14px] mb-[6px]">Espécie</Text>
           <TouchableOpacity
             className="bg-[#F3F0F0] rounded-[20px] px-[16px] py-[12px] mb-[6px] flex-row items-center justify-between"
@@ -268,7 +244,6 @@ export default function CadastroPet() {
           )}
           {!abrirEspecie && <View className="mb-[8px]" />}
 
-          {/* porte */}
           <Text className="text-[#333] text-[14px] mb-[6px]">Porte</Text>
           <TouchableOpacity
             className="bg-[#F3F0F0] rounded-[20px] px-[16px] py-[12px] mb-[6px] flex-row items-center justify-between"
@@ -301,7 +276,6 @@ export default function CadastroPet() {
           )}
           {!abrirPorte && <View className="mb-[8px]" />}
 
-          {/* sexo */}
           <Text className="text-[#333] text-[14px] mb-[6px]">Sexo</Text>
           <TouchableOpacity
             className="bg-[#F3F0F0] rounded-[20px] px-[16px] py-[12px] mb-[6px] flex-row items-center justify-between"
@@ -334,7 +308,6 @@ export default function CadastroPet() {
           )}
           {!abrirSexo && <View className="mb-[8px]" />}
 
-          {/* data de nascimento */}
           <Text className="text-[#333] text-[14px] mb-[6px]">Data de Nascimento</Text>
           <TextInput
             className="bg-[#F3F0F0] rounded-[20px] px-[16px] py-[12px] mb-[10px] text-[#333]"
@@ -345,7 +318,6 @@ export default function CadastroPet() {
             keyboardType="numeric"
           />
 
-          {/* se nao souber a idade marca aqui */}
           <TouchableOpacity
             className="flex-row items-start mb-[20px]"
             onPress={() => setIdadeDesconhecida(!idadeDesconhecida)}
@@ -374,7 +346,6 @@ export default function CadastroPet() {
             </Text>
           ) : null}
 
-          {/* botao continuar */}
           <TouchableOpacity
             className="bg-[#2C2C2C] rounded-[24px] py-[14px] items-center"
             activeOpacity={0.8}
@@ -388,7 +359,7 @@ export default function CadastroPet() {
         </View>
       </ScrollView>
 
-      {/* footer */}
+      {/* Rodapé */}
       <SafeAreaView edges={["bottom"]} className="bg-[#6B0889]">
         <Footer backgroundColor="#6B0889" />
       </SafeAreaView>

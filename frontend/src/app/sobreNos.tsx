@@ -2,7 +2,6 @@ import { View, Text, ScrollView, StyleSheet } from "react-native";
 import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack } from "expo-router";
-import { AntDesign } from "@expo/vector-icons";
 import Header from "../components/Headers/Header";
 import Footer from "../components/Footers/Footer";
 
@@ -20,7 +19,6 @@ export default function Sobre() {
       <SafeAreaView edges={["top"]} className="bg-[#FAFCFF] z-10">
         <Header
           backgroundColor="#FAFCFF"
-          leftContent={<AntDesign name="menu" size={26} color="black" />}
           centerContent={
             <Text className="text-[18px] font-bold text-[#6B0889]">ADOPET</Text>
           }

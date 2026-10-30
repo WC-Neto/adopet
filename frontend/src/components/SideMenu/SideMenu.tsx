@@ -18,24 +18,21 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import { Feather } from "@expo/vector-icons";
 import { useRouter, type Href } from "expo-router";
-import { useAuth } from "../../context/AuthContext";
 
 type ItemMenu = { label: string; rota: string };
 
-const FALLBACK: ItemMenu[] = [
+const ITENS_MENU: ItemMenu[] = [
   { label: "Início", rota: "/inicio" },
-  { label: "Adotar", rota: "/inicio" },
+  { label: "Adotar", rota: "/pet-adocao" },
   { label: "Doar", rota: "/cadastro-pet" },
   { label: "Minha conta", rota: "/conta" },
   { label: "Sobre nós", rota: "/sobreNos" },
-  { label: "FAQ", rota: "/faq" },
 ];
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:8000";
 const MONO = Platform.select({ ios: "Menlo", default: "monospace" });
 const DURACAO = 300;
 
-// Proporção da imagem de fundo (937 x 1678)
+// Mantém a proporção da imagem de fundo do menu.
 const RATIO = 937 / 1678;
 
 type Props = {
@@ -45,31 +42,17 @@ type Props = {
 
 export default function SideMenu({ open, onClose }: Props) {
   const router = useRouter();
-  const { usuario } = useAuth();
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
 
-  // Menu com a proporção da imagem, limitado a 90% da largura da tela
   const menuWidth = Math.min(height * RATIO, width * 0.9);
 
-  const [items, setItems] = useState<ItemMenu[]>(FALLBACK);
   const [mounted, setMounted] = useState(open);
   const progress = useSharedValue(open ? 1 : 0);
 
-  // Busca os itens no backend; se falhar, mantém o fallback
-  useEffect(() => {
-    const controller = new AbortController();
-    fetch(`${API_URL}/menu`, { signal: controller.signal })
-      .then((res) => (res.ok ? res.json() : Promise.reject()))
-      .then(setItems)
-      .catch(() => {});
-    return () => controller.abort();
-  }, []);
-
-  // Ao abrir, monta o Modal já neste render (sem setState dentro de efeito)
   if (open && !mounted) setMounted(true);
 
-  // Anima abrir/fechar; só desmonta o Modal depois que a animação termina
+  // Desmonta o menu depois de fechar a animação.
   useEffect(() => {
     const config = { duration: DURACAO, easing: Easing.out(Easing.cubic) };
     progress.value = withTiming(open ? 1 : 0, config);
@@ -97,7 +80,7 @@ export default function SideMenu({ open, onClose }: Props) {
       statusBarTranslucent
     >
       <View style={StyleSheet.absoluteFill}>
-        {/* Overlay: toque fora fecha o menu */}
+        {/* Fundo escuro que fecha o menu ao tocar */}
         <Animated.View
           style={[
             StyleSheet.absoluteFill,
@@ -112,7 +95,7 @@ export default function SideMenu({ open, onClose }: Props) {
           />
         </Animated.View>
 
-        {/* Menu */}
+        {/* Painel e opções do menu */}
         <Animated.View
           style={[
             {
@@ -127,7 +110,6 @@ export default function SideMenu({ open, onClose }: Props) {
             menuStyle,
           ]}
         >
-          {/* Imagem de fundo: camada absoluta que preenche o menu */}
           <Image
             source={require("../../../assets/images/menu-bg.png")}
             contentFit="cover"
@@ -135,7 +117,6 @@ export default function SideMenu({ open, onClose }: Props) {
             style={StyleSheet.absoluteFill}
           />
 
-          {/* Conteúdo por cima da imagem */}
           <View style={{ paddingTop: insets.top + 16 }}>
             <View className="flex-row items-center justify-between px-5">
               <Text
@@ -156,7 +137,7 @@ export default function SideMenu({ open, onClose }: Props) {
             </View>
 
             <View className="mt-7 gap-4 px-5">
-              {items.map((item) => (
+              {ITENS_MENU.map((item) => (
                 <Pressable
                   key={item.label}
                   onPress={() => navegar(item.rota)}
