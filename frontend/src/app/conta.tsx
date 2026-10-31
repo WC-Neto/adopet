@@ -123,11 +123,18 @@ export default function Conta() {
           <SecaoTitulo titulo="Meus Pets para Adoção" />
           {usuario.meus_pets && usuario.meus_pets.length > 0 ? (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} className="py-1">
-              {usuario.meus_pets.map((pet) => (
+              {Array.from(
+                new Map(usuario.meus_pets.map((pet) => [pet.id, pet])).values()
+              ).map((pet, index) => (
                 <MeuPetCard
-                  key={pet.id}
+                  key={`${pet.id}-${index}`}
                   pet={pet}
-                  onPress={(p) => console.log("Pet:", p.nome)}
+                  onPress={(p) =>
+                    router.push({
+                      pathname: "/pet-detalhes",
+                      params: { id_animal: String(p.id), nome: p.nome },
+                    })
+                  }
                 />
               ))}
             </ScrollView>
@@ -148,8 +155,10 @@ export default function Conta() {
           <SecaoTitulo titulo="Favoritos" />
           {usuario.favoritos && usuario.favoritos.length > 0 ? (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} className="py-1">
-              {usuario.favoritos.map((pet) => (
-                <FavoritoCard key={pet.id} pet={pet} />
+              {Array.from(
+                new Map(usuario.favoritos.map((pet) => [pet.id, pet])).values()
+              ).map((pet, index) => (
+                <FavoritoCard key={`${pet.id}-${index}`} pet={pet} />
               ))}
             </ScrollView>
           ) : (

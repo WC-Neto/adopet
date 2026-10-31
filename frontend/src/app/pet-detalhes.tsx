@@ -4,6 +4,7 @@ import {
   Alert,
   Image,
   Linking,
+  Platform,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -22,10 +23,19 @@ import {
   calcularIdade,
   formatarSexo,
   gerarLinkWhatsappAdocao,
+  obterPerfilUsuario,
   solicitarAdocao,
   type Animal,
   urlDaFoto,
 } from "../services/animais";
+
+function exibirAlerta(titulo: string, mensagem: string) {
+  if (Platform.OS === "web" && typeof window !== "undefined") {
+    window.alert(`${titulo}\n\n${mensagem}`);
+  } else {
+    Alert.alert(titulo, mensagem);
+  }
+}
 
 function getParam(value?: string | string[]) {
   return Array.isArray(value) ? value[0] : value;
@@ -78,6 +88,8 @@ export default function PetDetailsScreen() {
   const [solicitando, setSolicitando] = useState(false);
   const [solicitado, setSolicitado] = useState(false);
   const [favoritado, setFavoritado] = useState(false);
+  const [statusNaLista, setStatusNaLista] = useState<string | null>(null);
+  const [mensagemFeedback, setMensagemFeedback] = useState<string | null>(null);
 
   const idValido = Boolean(animalId && /^\d+$/.test(animalId));
   const resultadoAtual =
@@ -91,11 +103,16 @@ export default function PetDetailsScreen() {
   const erro = idValido
     ? resultadoAtual?.erro ?? ""
     : "O ID do pet é inválido. Volte e selecione um card.";
+  const ehMeuPet = Boolean(
+    animal && usuario?.id_usuario && animal.id_responsavel === usuario.id_usuario
+  );
 
   useEffect(() => {
     let ativo = true;
 
     if (!animalId || !/^\d+$/.test(animalId)) return;
+
+    setMensagemFeedback(null);
 
     buscarAnimal(animalId)
       .then((dados) => {
@@ -117,39 +134,89 @@ export default function PetDetailsScreen() {
         }
       });
 
+    if (usuario?.id_usuario) {
+      obterPerfilUsuario(usuario.id_usuario)
+        .then((perfil) => {
+          if (!ativo || !perfil) return;
+          const idNum = Number(animalId);
+          const petNaLista = Array.isArray(perfil.meus_pets)
+            ? perfil.meus_pets.find((p: any) => Number(p.id) === idNum)
+            : null;
+          const petFavorito = Array.isArray(perfil.favoritos)
+            ? perfil.favoritos.some((p: any) => Number(p.id) === idNum)
+            : false;
+
+          if (petNaLista) {
+            setSolicitado(true);
+            setStatusNaLista(petNaLista.status || "Em Processo");
+          } else {
+            setSolicitado(false);
+            setStatusNaLista(null);
+          }
+          setFavoritado(petFavorito);
+        })
+        .catch(() => {});
+    }
+
     return () => {
       ativo = false;
     };
-  }, [animalId, tentativa]);
+  }, [animalId, tentativa, usuario?.id_usuario]);
 
   const handleAdotar = async () => {
     if (!animal) return;
 
+    if (ehMeuPet) {
+      const msg =
+        "Este pet foi cadastrado por você e já está na sua lista de pets para adoção.";
+      setMensagemFeedback(msg);
+      exibirAlerta("Pet já está na sua lista", msg);
+      return;
+    }
+
     const linkWhatsapp = gerarLinkWhatsappAdocao(animal, usuario?.nome);
 
     if (!linkWhatsapp) {
-      Alert.alert(
+      exibirAlerta(
         "Contato indisponível",
         "O responsável por este pet não possui número de telefone cadastrado."
       );
       return;
     }
 
+    if (solicitado) {
+      const msg = `Este pet já está na sua lista de adoção (${statusNaLista || "Em Processo"}). Abrindo o WhatsApp para continuar a conversa.`;
+      setMensagemFeedback(msg);
+      exibirAlerta("Já está na sua lista", msg);
+      await Linking.openURL(linkWhatsapp).catch(() => {});
+      return;
+    }
+
     try {
       setSolicitando(true);
       if (usuario?.id_usuario) {
-        await solicitarAdocao(animal.id_animal, usuario.id_usuario).catch(
-          () => {}
+        const resp = await solicitarAdocao(
+          animal.id_animal,
+          usuario.id_usuario
         );
         setSolicitado(true);
         setFavoritado(true);
+        setStatusNaLista("Em Processo");
+        if (resp?.ja_existia) {
+          setMensagemFeedback(resp.mensagem);
+          exibirAlerta("Já está na sua lista", resp.mensagem);
+        } else {
+          setMensagemFeedback(
+            "Pet adicionado à sua lista em 'Em Processo' e aos seus Favoritos!"
+          );
+        }
       }
       await Linking.openURL(linkWhatsapp);
-    } catch {
-      Alert.alert(
-        "Erro",
-        "Não foi possível abrir o WhatsApp no seu dispositivo."
-      );
+    } catch (e: any) {
+      const msgErro =
+        e?.message || "Não foi possível registrar a solicitação de adoção.";
+      setMensagemFeedback(msgErro);
+      exibirAlerta("Aviso", msgErro);
     } finally {
       setSolicitando(false);
     }
@@ -159,22 +226,28 @@ export default function PetDetailsScreen() {
     if (!animal) return;
 
     if (!usuario) {
-      Alert.alert(
+      exibirAlerta(
         "Login Necessário",
         "Faça login para salvar seus pets favoritos."
       );
       return;
     }
 
+    if (favoritado) {
+      const msg = `${animal.nome} já está na sua lista de favoritos.`;
+      setMensagemFeedback(msg);
+      exibirAlerta("Já favoritado", msg);
+      return;
+    }
+
     try {
       await adicionarFavorito(animal.id_animal, usuario.id_usuario);
       setFavoritado(true);
-      Alert.alert(
-        "Favoritado! ❤️",
-        `${animal.nome} foi adicionado aos seus favoritos.`
-      );
+      const msg = `${animal.nome} foi adicionado aos seus favoritos.`;
+      setMensagemFeedback(msg);
+      exibirAlerta("Favoritado! ❤️", msg);
     } catch (e: any) {
-      Alert.alert("Aviso", e.message || "Erro ao favoritar pet.");
+      exibirAlerta("Aviso", e.message || "Erro ao favoritar pet.");
     }
   };
 
@@ -312,7 +385,18 @@ export default function PetDetailsScreen() {
                 />
               </View>
 
-              <View className="flex-row items-center justify-center gap-3 border-t border-[#BEBEBE] py-4">
+              {(ehMeuPet || solicitado || mensagemFeedback) && (
+                <View className="mx-1 mt-2 rounded-lg border border-[#E5D4EF] bg-[#F7EFFB] px-3 py-2">
+                  <Text className="text-center text-[12px] font-medium text-[#6B0889]">
+                    {mensagemFeedback ||
+                      (ehMeuPet
+                        ? "Este pet foi cadastrado por você e já está na sua lista (Disponível)."
+                        : `Este pet já está na sua lista de adoção (${statusNaLista || "Em Processo"}).`)}
+                  </Text>
+                </View>
+              )}
+
+              <View className="flex-row items-center justify-center gap-3 border-t border-[#BEBEBE] py-4 mt-2">
                 <TouchableOpacity
                   onPress={handleFavoritar}
                   className={`h-11 w-11 items-center justify-center rounded-full border ${
@@ -333,10 +417,12 @@ export default function PetDetailsScreen() {
                   onPress={handleAdotar}
                   disabled={solicitando}
                   accessibilityRole="button"
-                  className={`flex-row items-center gap-2 rounded-full px-8 py-3 ${
-                    solicitado
-                      ? "border border-[#10B981] bg-[#D1FAE5]"
-                      : "bg-[#6B0889]"
+                  className={`flex-row items-center gap-2 rounded-full px-6 py-3 ${
+                    ehMeuPet
+                      ? "border border-[#9CA3AF] bg-[#E5E7EB]"
+                      : solicitado
+                        ? "border border-[#10B981] bg-[#D1FAE5]"
+                        : "bg-[#6B0889]"
                   }`}
                 >
                   {solicitando ? (
@@ -344,16 +430,30 @@ export default function PetDetailsScreen() {
                   ) : (
                     <>
                       <Ionicons
-                        name="logo-whatsapp"
+                        name={ehMeuPet ? "checkmark-circle" : "logo-whatsapp"}
                         size={19}
-                        color={solicitado ? "#065F46" : "white"}
+                        color={
+                          ehMeuPet
+                            ? "#4B5563"
+                            : solicitado
+                              ? "#065F46"
+                              : "white"
+                        }
                       />
                       <Text
-                        className={`text-[15px] font-bold ${
-                          solicitado ? "text-[#065F46]" : "text-white"
+                        className={`text-[14px] font-bold ${
+                          ehMeuPet
+                            ? "text-[#4B5563]"
+                            : solicitado
+                              ? "text-[#065F46]"
+                              : "text-white"
                         }`}
                       >
-                        {solicitado ? "Conversar no WhatsApp" : "Adote-me"}
+                        {ehMeuPet
+                          ? "Seu pet (Já na lista)"
+                          : solicitado
+                            ? "Já na lista • WhatsApp"
+                            : "Adote-me"}
                       </Text>
                     </>
                   )}
