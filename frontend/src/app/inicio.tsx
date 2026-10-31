@@ -1,6 +1,7 @@
-import { Ionicons } from "@expo/vector-icons";
-import { useRef, useState } from "react";
+﻿import { Ionicons } from "@expo/vector-icons";
+import { useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   FlatList,
   ImageBackground,
   ScrollView,
@@ -14,62 +15,92 @@ import { router, Stack } from "expo-router";
 import Footer from "../components/Footers/Footer";
 import PetCard, { Pet } from "../components/PetCard";
 import Header from "../components/Headers/Header";
+import {
+  calcularIdade,
+  listarAnimais,
+  urlDaFoto,
+  type Animal,
+} from "../services/animais";
 
-// Restaurando as constantes necessárias para o carrossel e o array PETS
 const CARD_WIDTH = 160;
 const CARD_MARGIN = 12;
 const SNAP_INTERVAL = CARD_WIDTH + CARD_MARGIN;
 
-const PETS: Pet[] = [
-  {
-    id: "1",
-    name: "Rai",
-    age: "8 anos",
-    location: "Três Lagoas, MS",
-    imageUri: require("../../assets/images/rai.png"),
-  },
-  {
-    id: "2",
-    name: "Sam",
-    age: "3 meses",
-    location: "Três Lagoas, MS",
-    imageUri: require("../../assets/images/sam.png"),
-  },
-  {
-    id: "3",
-    name: "Felix",
-    age: "5 anos",
-    location: "Três Lagoas, MS",
-    imageUri: require("../../assets/images/felix.jpg"),
-  },
-  {
-    id: "4",
-    name: "Luna",
-    age: "1 ano",
-    location: "Três Lagoas, MS",
-    imageUri: require("../../assets/images/luna.png"),
-  },
-];
+function toPetCard(animal: Animal): Pet {
+  return {
+    id: String(animal.id_animal),
+    name: animal.nome,
+    age: calcularIdade(animal.dt_nascimento),
+    location: [animal.cidade, animal.uf].filter(Boolean).join(", "),
+    imageUri: urlDaFoto(animal.foto_url),
+  };
+}
 
 export default function HomeScreen() {
-  const flatListRef = useRef<FlatList>(null);
+  const flatListRef = useRef<FlatList<Pet>>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [tentativa, setTentativa] = useState(0);
+  const [resultado, setResultado] = useState<{
+    tentativa: number;
+    pets: Pet[];
+    erro: string;
+  } | null>(null);
 
-  // Restaurando a lógica original de rolagem do carrossel
+  useEffect(() => {
+    let ativo = true;
+
+    listarAnimais()
+      .then((animais) => {
+        if (ativo) {
+          setResultado({
+            tentativa,
+            pets: animais
+              .filter((animal) => animal.foto_url?.trim())
+              .map(toPetCard),
+            erro: "",
+          });
+        }
+      })
+      .catch((falha: unknown) => {
+        if (ativo) {
+          setResultado({
+            tentativa,
+            pets: [],
+            erro:
+              falha instanceof Error
+                ? falha.message
+                : "Não foi possível carregar os pets.",
+          });
+        }
+      })
+
+    return () => {
+      ativo = false;
+    };
+  }, [tentativa]);
+
+  const resultadoAtual = resultado?.tentativa === tentativa ? resultado : null;
+  const carregando = resultadoAtual === null;
+  const pets = resultadoAtual?.pets ?? [];
+  const erro = resultadoAtual?.erro ?? "";
+  const indiceAtual = Math.min(currentIndex, Math.max(0, pets.length - 1));
+
   const scrollPrev = () => {
-    const next = Math.max(0, currentIndex - 1);
+    if (pets.length === 0) return;
+    const next = Math.max(0, indiceAtual - 1);
     flatListRef.current?.scrollToIndex({ index: next, animated: true });
     setCurrentIndex(next);
   };
 
   const scrollNext = () => {
-    const next = Math.min(PETS.length - 1, currentIndex + 1);
+    if (pets.length === 0) return;
+    const next = Math.min(pets.length - 1, indiceAtual + 1);
     flatListRef.current?.scrollToIndex({ index: next, animated: true });
     setCurrentIndex(next);
   };
 
-  const isFirst = currentIndex === 0;
-  const isLast = currentIndex === PETS.length - 1;
+  const isFirst = indiceAtual === 0;
+  const isLast = pets.length === 0 || indiceAtual === pets.length - 1;
 
   return (
     <View className="flex-1 bg-[#f8f7f9]">
@@ -84,7 +115,7 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerClassName="grow"
       >
-        {/* ── Hero Banner ── */}
+        {/* Banner */}
         <ImageBackground
           source={require("../../assets/images/banner.jpeg")}
           className="min-h-[140px] flex-row items-center justify-between px-6 py-6 overflow-hidden"
@@ -115,7 +146,7 @@ export default function HomeScreen() {
           </View>
         </ImageBackground>
 
-        {/* ── Tagline ── */}
+        {/* Mensagem de boas-vindas */}
         <View className="items-center py-6 bg-white">
           <Text className="text-xl font-extrabold text-[#1a1a1a]">
             Mude vidas!
@@ -125,7 +156,7 @@ export default function HomeScreen() {
           </Text>
         </View>
 
-        {/* ── Carrossel ── */}
+        {/* Pets disponíveis */}
         <View className="pt-4 pb-6 bg-white border-t border-[#f0f0f0]">
           <View className="flex-row items-center justify-between px-4 mb-3">
             <Text className="text-[13px] text-[#444] font-medium flex-1 leading-[18px]">
@@ -157,29 +188,62 @@ export default function HomeScreen() {
             </View>
           </View>
 
-          <FlatList
-            ref={flatListRef}
-            data={PETS}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <PetCard pet={item} onPress={(pet) => console.log("Pet:", pet.name)} />
-            )}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerClassName="px-4 pb-1"
-            snapToInterval={SNAP_INTERVAL}
-            decelerationRate="fast"
-            snapToAlignment="start"
-            onMomentumScrollEnd={(e) => {
-              const index = Math.round(
-                e.nativeEvent.contentOffset.x / SNAP_INTERVAL
-              );
-              setCurrentIndex(index);
-            }}
-          />
+          {carregando ? (
+            <View className="h-[180px] items-center justify-center">
+              <ActivityIndicator color="#6B0889" />
+              <Text className="mt-2 text-[13px] text-[#555]">
+                Carregando pets...
+              </Text>
+            </View>
+          ) : erro ? (
+            <View className="min-h-[160px] items-center justify-center px-5">
+              <Text className="text-center text-[13px] leading-5 text-[#555]">
+                {erro}{"\n"}Confira se o PostgreSQL e o backend estão ativos.
+              </Text>
+              <TouchableOpacity
+                className="mt-3 rounded-full bg-[#6B0889] px-5 py-2"
+                onPress={() => setTentativa((valor) => valor + 1)}
+              >
+                <Text className="font-semibold text-white">Tentar novamente</Text>
+              </TouchableOpacity>
+            </View>
+          ) : pets.length === 0 ? (
+            <Text className="px-4 py-6 text-center text-[13px] text-[#444]">
+              Nenhum pet disponível com foto.
+            </Text>
+          ) : (
+            <FlatList
+              ref={flatListRef}
+              data={pets}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <PetCard
+                  pet={item}
+                  onPress={(pet) =>
+                    router.push({
+                      pathname: "/pet-detalhes",
+                      params: { id_animal: pet.id, nome: pet.name },
+                    })
+                  }
+                />
+              )}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerClassName="px-4 pb-1"
+              snapToInterval={SNAP_INTERVAL}
+              decelerationRate="fast"
+              snapToAlignment="start"
+              onMomentumScrollEnd={(e) => {
+                const index = Math.round(
+                  e.nativeEvent.contentOffset.x / SNAP_INTERVAL
+                );
+                setCurrentIndex(Math.min(index, pets.length - 1));
+              }}
+            />
+          )}
         </View>
 
-        {/* ── Seção Doação ── */}
+        {/* Incentivo à adoção responsável */}
         <View className="items-center py-8 px-6 bg-[#f8f7f9] gap-5">
           <Text className="text-lg font-extrabold text-[#1a1a1a] text-center leading-[26px]">
             Valorize a adoção{"\n"}responsável

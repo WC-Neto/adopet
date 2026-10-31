@@ -129,8 +129,11 @@ export default function CadastroPet() {
         return;
       }
 
-      // cadastrou, vai pra inicio
-      router.push("/inicio");
+      // basico ok, segue pra saude (tela da julia)
+      router.push({
+        pathname: "/cadastro-saude",
+        params: { id_animal: String(data.id_animal) },
+      });
     } catch (e: any) {
       clearTimeout(timeoutId);
       // se demorar muito provavelmente e o banco

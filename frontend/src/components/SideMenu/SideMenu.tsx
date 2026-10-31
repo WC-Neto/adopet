@@ -24,8 +24,9 @@ type ItemMenu = { label: string; rota: string };
 
 const FALLBACK: ItemMenu[] = [
   { label: "Início", rota: "/inicio" },
-  { label: "Adotar", rota: "/inicio" },
-  { label: "Doar", rota: "/cadastro-pet" },
+  { label: "Adotar", rota: "/pet-adocao" },
+  { label: "Doar", rota: "/doar" },
+  { label: "Filtros", rota: "/filtro" },
   { label: "Minha conta", rota: "/conta" },
   { label: "Sobre nós", rota: "/sobreNos" },
   { label: "FAQ", rota: "/faq" },

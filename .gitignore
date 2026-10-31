@@ -1,0 +1,6 @@
+﻿.env
+**/.env
+**/__pycache__/
+**/.expo/
+**/node_modules/
+*.pyc

@@ -106,10 +106,146 @@ class AnimalResponse(BaseModel):
     porte: str
     sexo: str
     dt_nascimento: Optional[date] = None
+    castrado: bool = False
+    vacinas: Optional[str] = None
+    vermifugado: bool = False
+    condicao_especial: bool = False
+    medicamento_continuo: bool = False
+    historico_saude: Optional[str] = None
+    microchipado: bool = False
+    historia: Optional[str] = None
+    motivo_doacao: Optional[str] = None
+    personalidade: Optional[str] = None
     cidade: str
     uf: str
     situacao: str
     id_responsavel: int
+
+
+COLUNAS_ANIMAL = """
+    id_animal, nome, foto_url, especie, porte, sexo, dt_nascimento,
+    castrado, vacinas, vermifugado, condicao_especial,
+    medicamento_continuo, historico_saude, microchipado, historia,
+    motivo_doacao, personalidade, cidade, uf, situacao, id_responsavel
+"""
+
+
+def resposta_animal(linha) -> AnimalResponse:
+    return AnimalResponse(
+        id_animal=linha[0],
+        nome=linha[1],
+        foto_url=linha[2],
+        especie=linha[3],
+        porte=linha[4],
+        sexo=linha[5],
+        dt_nascimento=linha[6],
+        castrado=linha[7],
+        vacinas=linha[8],
+        vermifugado=linha[9],
+        condicao_especial=linha[10],
+        medicamento_continuo=linha[11],
+        historico_saude=linha[12],
+        microchipado=linha[13],
+        historia=linha[14],
+        motivo_doacao=linha[15],
+        personalidade=linha[16],
+        cidade=linha[17],
+        uf=linha[18],
+        situacao=linha[19],
+        id_responsavel=linha[20],
+    )
+
+
+class ItemMenu(BaseModel):
+    label: str
+    rota: str
+
+
+MENU_ITENS: List[ItemMenu] = [
+    ItemMenu(label="Início", rota="/inicio"),
+    ItemMenu(label="Adotar", rota="/pet-adocao"),
+    ItemMenu(label="Doar", rota="/doar"),
+    ItemMenu(label="Filtros", rota="/filtro"),
+    ItemMenu(label="Minha conta", rota="/conta"),
+    ItemMenu(label="Sobre nós", rota="/sobreNos"),
+    ItemMenu(label="FAQ", rota="/faq"),
+]
+
+
+class PetPerfil(BaseModel):
+    id: int
+    nome: str
+    sexo: str
+    idade: str
+    localizacao: str
+    foto: str
+    status: Optional[str] = None
+
+
+class UsuarioPerfil(BaseModel):
+    nome_usuario: str
+    email: str
+    telefone: str
+    cidade: str
+    data_nascimento: str
+    meus_pets: List[PetPerfil]
+    favoritos: List[PetPerfil]
+
+
+# perfil exemplo ate ter auth completo no /usuarios/me
+USUARIO_LOGADO = UsuarioPerfil(
+    nome_usuario="Usuario_Silva",
+    email="emailusuario@gmail.com",
+    telefone="(12) 34567-8910",
+    cidade="Três Lagoas, MS",
+    data_nascimento="27/10/2026",
+    meus_pets=[
+        PetPerfil(
+            id=1,
+            nome="Thor",
+            sexo="M",
+            idade="5 anos",
+            localizacao="Três Lagoas, MS",
+            foto="luna",
+            status="Disponível",
+        ),
+        PetPerfil(
+            id=2,
+            nome="Joe",
+            sexo="M",
+            idade="9 anos",
+            localizacao="Três Lagoas, MS",
+            foto="joe",
+            status="Adotado(a)",
+        ),
+    ],
+    favoritos=[
+        PetPerfil(
+            id=3,
+            nome="Jana",
+            sexo="F",
+            idade="1 ano",
+            localizacao="Três Lagoas, MS",
+            foto="jana",
+        ),
+        PetPerfil(
+            id=4,
+            nome="Sam",
+            sexo="M",
+            idade="3 meses",
+            localizacao="Três Lagoas, MS",
+            foto="sam",
+        ),
+        PetPerfil(
+            id=5,
+            nome="Rai",
+            sexo="M",
+            idade="8 anos",
+            localizacao="Três Lagoas, MS",
+            foto="rai",
+        ),
+    ],
+)
 
 
 def converter_sexo(sexo: str) -> str:
@@ -367,34 +503,50 @@ def alterar_senha(dados: UsuarioAlterarSenha):
         )
 
 
+@app.get("/menu", response_model=List[ItemMenu])
+def listar_itens_menu():
+    return MENU_ITENS
+
+
+@app.get("/usuarios/me", response_model=UsuarioPerfil)
+def obter_usuario_logado():
+    return USUARIO_LOGADO
+
+
 @app.get("/animais", response_model=List[AnimalResponse])
 def listar_animais():
     try:
         with conectar(BANCO) as conn:
             linhas = conn.execute(
-                """
-                SELECT id_animal, nome, foto_url, especie, porte, sexo,
-                       dt_nascimento, cidade, uf, situacao, id_responsavel
+                f"""
+                SELECT {COLUNAS_ANIMAL}
                 FROM animal
+                WHERE situacao = 'Disponível'
                 ORDER BY id_animal
                 """
             ).fetchall()
-            return [
-                AnimalResponse(
-                    id_animal=r[0],
-                    nome=r[1],
-                    foto_url=r[2],
-                    especie=r[3],
-                    porte=r[4],
-                    sexo=r[5],
-                    dt_nascimento=r[6],
-                    cidade=r[7],
-                    uf=r[8],
-                    situacao=r[9],
-                    id_responsavel=r[10],
-                )
-                for r in linhas
-            ]
+            return [resposta_animal(linha) for linha in linhas]
+    except psycopg.Error as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erro ao consultar o PostgreSQL: {e}",
+        )
+
+
+@app.get("/animais/{id_animal}", response_model=AnimalResponse)
+def buscar_animal(id_animal: int):
+    try:
+        with conectar(BANCO) as conn:
+            linha = conn.execute(
+                f"SELECT {COLUNAS_ANIMAL} FROM animal WHERE id_animal = %s",
+                (id_animal,),
+            ).fetchone()
+
+        if linha is None:
+            raise HTTPException(status_code=404, detail="Pet não encontrado.")
+        return resposta_animal(linha)
+    except HTTPException:
+        raise
     except psycopg.Error as e:
         raise HTTPException(
             status_code=500,
@@ -450,15 +602,14 @@ def criar_animal(animal: AnimalCreate):
                     detail="Responsável não encontrado. Cadastre um usuário antes.",
                 )
 
-            linha = conn.execute(
+            novo_id = conn.execute(
                 """
                 INSERT INTO animal (
                     nome, foto_url, especie, porte, sexo, dt_nascimento,
                     personalidade, cidade, uf, id_responsavel
                 )
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                RETURNING id_animal, nome, foto_url, especie, porte, sexo,
-                          dt_nascimento, cidade, uf, situacao, id_responsavel
+                RETURNING id_animal
                 """,
                 (
                     nome_limpo,
@@ -475,25 +626,162 @@ def criar_animal(animal: AnimalCreate):
             ).fetchone()
             conn.commit()
 
-            if not linha:
+            if not novo_id:
                 raise HTTPException(
                     status_code=500,
                     detail="Não foi possível cadastrar o animal.",
                 )
 
-            return AnimalResponse(
-                id_animal=linha[0],
-                nome=linha[1],
-                foto_url=linha[2],
-                especie=linha[3],
-                porte=linha[4],
-                sexo=linha[5],
-                dt_nascimento=linha[6],
-                cidade=linha[7],
-                uf=linha[8],
-                situacao=linha[9],
-                id_responsavel=linha[10],
+            linha = conn.execute(
+                f"SELECT {COLUNAS_ANIMAL} FROM animal WHERE id_animal = %s",
+                (novo_id[0],),
+            ).fetchone()
+            return resposta_animal(linha)
+    except HTTPException:
+        raise
+    except psycopg.Error as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erro no PostgreSQL: {e}",
+        )
+
+
+# ---------- saude (julia) ----------
+
+class SaudeUpdate(BaseModel):
+    castrado: str
+    vacinas: str
+    vermifugado: str
+    condicao_especial: str
+    descricao_condicao: Optional[str] = None
+    medicamento_continuo: str
+    historico_saude: Optional[str] = None
+    microchipado: str
+
+
+def converter_sim_nao(valor: str) -> bool:
+    valor = valor.strip().lower()
+    if valor == "sim":
+        return True
+    if valor in ("não", "nao"):
+        return False
+    raise HTTPException(
+        status_code=400,
+        detail="Informe Sim ou Não nos campos de seleção.",
+    )
+
+
+@app.put("/animais/{id_animal}/saude")
+def atualizar_saude(id_animal: int, saude: SaudeUpdate):
+    castrado = converter_sim_nao(saude.castrado)
+    vermifugado = converter_sim_nao(saude.vermifugado)
+    condicao_especial = converter_sim_nao(saude.condicao_especial)
+    medicamento_continuo = converter_sim_nao(saude.medicamento_continuo)
+    microchipado = converter_sim_nao(saude.microchipado)
+
+    vacinas = saude.vacinas.strip()
+    if len(vacinas) > 200:
+        raise HTTPException(
+            status_code=400,
+            detail="A lista de vacinas deve ter no máximo 200 caracteres.",
+        )
+
+    # junta descricao da condicao ao historico
+    descricao = (saude.descricao_condicao or "").strip()
+    historico = (saude.historico_saude or "").strip()
+    partes_historico = []
+    if descricao:
+        partes_historico.append(f"Descrição da condição especial: {descricao}")
+    if historico:
+        partes_historico.append(f"Histórico de saúde: {historico}")
+    historico_final = "\n".join(partes_historico) or None
+
+    try:
+        with conectar(BANCO) as conn:
+            existe = conn.execute(
+                "SELECT 1 FROM animal WHERE id_animal = %s",
+                (id_animal,),
+            ).fetchone()
+            if not existe:
+                raise HTTPException(status_code=404, detail="Animal não encontrado.")
+
+            conn.execute(
+                """
+                UPDATE animal
+                SET castrado = %s,
+                    vacinas = %s,
+                    vermifugado = %s,
+                    condicao_especial = %s,
+                    medicamento_continuo = %s,
+                    historico_saude = %s,
+                    microchipado = %s
+                WHERE id_animal = %s
+                """,
+                (
+                    castrado,
+                    vacinas,
+                    vermifugado,
+                    condicao_especial,
+                    medicamento_continuo,
+                    historico_final,
+                    microchipado,
+                    id_animal,
+                ),
             )
+            conn.commit()
+
+        return {
+            "mensagem": "Dados de saúde atualizados com sucesso.",
+            "id_animal": id_animal,
+        }
+    except HTTPException:
+        raise
+    except psycopg.Error as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erro no PostgreSQL: {e}",
+        )
+
+
+# ---------- comportamento (pedro) ----------
+
+class ComportamentoUpdate(BaseModel):
+    historia: Optional[str] = None
+    motivo_doacao: Optional[str] = None
+    personalidade: Optional[str] = None
+
+
+@app.put("/animais/{id_animal}/comportamento")
+def atualizar_comportamento(id_animal: int, dados: ComportamentoUpdate):
+    historia = (dados.historia or "").strip() or None
+    motivo = (dados.motivo_doacao or "").strip() or None
+    personalidade = (dados.personalidade or "").strip() or None
+
+    try:
+        with conectar(BANCO) as conn:
+            existe = conn.execute(
+                "SELECT 1 FROM animal WHERE id_animal = %s",
+                (id_animal,),
+            ).fetchone()
+            if not existe:
+                raise HTTPException(status_code=404, detail="Animal não encontrado.")
+
+            conn.execute(
+                """
+                UPDATE animal
+                SET historia = %s,
+                    motivo_doacao = %s,
+                    personalidade = %s
+                WHERE id_animal = %s
+                """,
+                (historia, motivo, personalidade, id_animal),
+            )
+            conn.commit()
+
+        return {
+            "mensagem": "Dados de comportamento atualizados com sucesso.",
+            "id_animal": id_animal,
+        }
     except HTTPException:
         raise
     except psycopg.Error as e:
