@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { createElement, useState } from "react";
 import {
   Image,
   Platform,
@@ -204,58 +204,131 @@ export default function Login() {
           </View>
 
           {/* FORM CARD */}
-          <View className="w-[84%] max-w-[380px] bg-white rounded-[28px] mt-[-45px] mb-[32px] px-[34px] py-[32px] shadow-md border border-[#E2DDDD] border-b-[3px] border-b-[#C8C2C2]">
-            <Input
-              label="Email"
-              placeholder="Digite seu e-mail"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-            />
+          {Platform.OS === "web"
+            ? createElement(
+                "form",
+                {
+                  onSubmit: (e: any) => {
+                    e.preventDefault?.();
+                    if (!carregando) handleLogin();
+                  },
+                  style: { width: "84%", maxWidth: 380 },
+                },
+                <View className="w-full bg-white rounded-[28px] mt-[-45px] mb-[32px] px-[34px] py-[32px] shadow-md border border-[#E2DDDD] border-b-[3px] border-b-[#C8C2C2]">
+                  <Input
+                    label="Email"
+                    placeholder="Digite seu e-mail"
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                    autoComplete="email"
+                    name="email"
+                  />
 
-            <Input
-              label="Senha"
-              placeholder="Digite sua senha"
-              value={senha}
-              onChangeText={setSenha}
-              secureTextEntry
-            />
+                  <Input
+                    label="Senha"
+                    placeholder="Digite sua senha"
+                    value={senha}
+                    onChangeText={setSenha}
+                    secureTextEntry
+                    autoComplete="current-password"
+                    name="password"
+                  />
 
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={() => router.push("/alterar-senha")}
-              className="mt-[-4px] mb-[26px]"
-            >
-              <Text className="text-[11px] font-bold text-[#1A1A1A] underline">
-                Esqueceu a senha?
-              </Text>
-            </TouchableOpacity>
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={() => router.push("/alterar-senha")}
+                    className="mt-[-4px] mb-[26px]"
+                  >
+                    <Text className="text-[11px] font-bold text-[#1A1A1A] underline">
+                      Esqueceu a senha?
+                    </Text>
+                  </TouchableOpacity>
 
-            {erro ? (
-              <Text className="text-[13px] font-semibold text-[#D92D20] text-center mb-[14px]">
-                {erro}
-              </Text>
-            ) : null}
+                  {erro ? (
+                    <Text className="text-[13px] font-semibold text-[#D92D20] text-center mb-[14px]">
+                      {erro}
+                    </Text>
+                  ) : null}
 
-            <View className="items-center mb-[28px]">
-              <Button
-                title={carregando ? "Entrando..." : "Entrar"}
-                backgroundColor="#262626"
-                textColor="#FFFFFF"
-                onPress={handleLogin}
-              />
-            </View>
+                  <View className="items-center mb-[28px]">
+                    <Button
+                      title={carregando ? "Entrando..." : "Entrar"}
+                      backgroundColor="#262626"
+                      textColor="#FFFFFF"
+                      onPress={handleLogin}
+                    />
+                  </View>
 
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={() => router.push("/cadastro")}
-              className="items-center"
-            >
-              <Text className="text-[11px] font-bold text-[#1A1A1A] text-center underline leading-[18px]">
-                Não tem uma conta?{"\n"}Cadastre-se agora clicando aqui
-              </Text>
-            </TouchableOpacity>
-          </View>
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={() => router.push("/cadastro")}
+                    className="items-center"
+                  >
+                    <Text className="text-[11px] font-bold text-[#1A1A1A] text-center underline leading-[18px]">
+                      Não tem uma conta?{"\n"}Cadastre-se agora clicando aqui
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )
+            : (
+              <View className="w-[84%] max-w-[380px] bg-white rounded-[28px] mt-[-45px] mb-[32px] px-[34px] py-[32px] shadow-md border border-[#E2DDDD] border-b-[3px] border-b-[#C8C2C2]">
+                <Input
+                  label="Email"
+                  placeholder="Digite seu e-mail"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoComplete="email"
+                  name="email"
+                />
+
+                <Input
+                  label="Senha"
+                  placeholder="Digite sua senha"
+                  value={senha}
+                  onChangeText={setSenha}
+                  secureTextEntry
+                  autoComplete="current-password"
+                  name="password"
+                />
+
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={() => router.push("/alterar-senha")}
+                  className="mt-[-4px] mb-[26px]"
+                >
+                  <Text className="text-[11px] font-bold text-[#1A1A1A] underline">
+                    Esqueceu a senha?
+                  </Text>
+                </TouchableOpacity>
+
+                {erro ? (
+                  <Text className="text-[13px] font-semibold text-[#D92D20] text-center mb-[14px]">
+                    {erro}
+                  </Text>
+                ) : null}
+
+                <View className="items-center mb-[28px]">
+                  <Button
+                    title={carregando ? "Entrando..." : "Entrar"}
+                    backgroundColor="#262626"
+                    textColor="#FFFFFF"
+                    onPress={handleLogin}
+                  />
+                </View>
+
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={() => router.push("/cadastro")}
+                  className="items-center"
+                >
+                  <Text className="text-[11px] font-bold text-[#1A1A1A] text-center underline leading-[18px]">
+                    Não tem uma conta?{"\n"}Cadastre-se agora clicando aqui
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
         </View>
 
         {/* BOTTOM SAFE AREA */}

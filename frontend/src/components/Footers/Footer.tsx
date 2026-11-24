@@ -20,7 +20,7 @@ export default function Footer({
                 e amaldiçoar todos nesse grupo */}
         <Image
           source={require("../../../assets/images/logo2.png")}
-          className="w-[40px] h-[40px] ml-[10px]"
+          style={{ width: 22, height: 22, marginLeft: 8 }}
           resizeMode="contain"
         />
       </View>

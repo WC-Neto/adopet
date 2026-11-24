@@ -9,7 +9,10 @@ CREATE TABLE usuario (
     telefone VARCHAR(11) NOT NULL, 
     tipo_usuario VARCHAR(20) NOT NULL CHECK (tipo_usuario IN ('ONG', 'Adotante')),
     cidade VARCHAR(100) NOT NULL,
-    uf CHAR(2) NOT NULL
+    uf CHAR(2) NOT NULL,
+    perfil_adocao_resultado TEXT,
+    perfil_adocao_respostas JSONB,
+    perfil_adocao_atualizado_em TIMESTAMP
 );
 
 CREATE TABLE animal (

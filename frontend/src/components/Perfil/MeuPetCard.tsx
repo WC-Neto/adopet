@@ -7,12 +7,13 @@ import { PetPerfil } from "./types";
 type Props = { pet: PetPerfil; onPress?: (pet: PetPerfil) => void };
 
 export default function MeuPetCard({ pet, onPress }: Props) {
-  const adotada = pet.status === "Adotado(a)";
+  const status = pet.status || "Disponível";
+  const adotada = status === "Adotado(a)" || status === "Adotado";
 
   return (
-    <View className="w-[140px] mr-3 rounded-xl border border-[#EEEEEE] bg-white p-2 shadow-sm">
+    <View className="mr-3 w-[150px] rounded-2xl border border-[#EEEEEE] bg-white p-2 shadow-sm">
       <TouchableOpacity
-        activeOpacity={0.8}
+        activeOpacity={0.85}
         onPress={() =>
           router.push({
             pathname: "/pet-detalhes",
@@ -20,26 +21,26 @@ export default function MeuPetCard({ pet, onPress }: Props) {
           })
         }
       >
-        <FotoPet foto={pet.foto} className="w-full h-[110px] rounded-2xl overflow-hidden" />
+        <FotoPet foto={pet.foto} className="h-[118px] w-full rounded-xl" />
 
         <View className="mt-2 flex-row items-center justify-between">
-          <Text numberOfLines={1} className="text-[13px] font-bold text-[#F26B0F] flex-1 mr-1">
+          <Text numberOfLines={1} className="mr-1 flex-1 text-[13px] font-bold text-[#F26B0F]">
             {pet.nome}
           </Text>
           <SexoIcone sexo={pet.sexo} />
         </View>
-        <Text numberOfLines={1} className="text-[10px] text-[#6B6B6B]">{pet.localizacao}</Text>
-        <Text className="text-[10px] font-bold text-black">{pet.idade}</Text>
+        <Text numberOfLines={1} className="text-[11px] text-[#6B6B6B]">{pet.localizacao}</Text>
+        <Text numberOfLines={1} className="text-[11px] font-bold text-black">{pet.idade}</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
         onPress={() => onPress?.(pet)}
         disabled={adotada}
-        className={`mt-2 items-center rounded-full py-1.5 ${
+        className={`mt-2 items-center rounded-full py-2 ${
           adotada ? "bg-[#B9A0C4]" : "bg-[#6B0889]"
         }`}
       >
-        <Text className="text-[12px] font-bold text-white">{pet.status || "Disponível"}</Text>
+        <Text numberOfLines={1} className="px-2 text-[12px] font-bold text-white">{status}</Text>
       </TouchableOpacity>
     </View>
   );

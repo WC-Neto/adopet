@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
+  Image,
   ImageBackground,
   ScrollView,
   Text,
@@ -147,11 +148,11 @@ export default function HomeScreen() {
         </ImageBackground>
 
         {/* Mensagem de boas-vindas */}
-        <View className="items-center py-6 bg-white">
-          <Text className="text-xl font-extrabold text-[#1a1a1a]">
+        <View className="items-center py-10 px-6 bg-white">
+          <Text className="text-3xl font-extrabold text-[#1a1a1a] text-center">
             Mude vidas!
           </Text>
-          <Text className="text-lg font-semibold text-[#1a1a1a] mt-0.5">
+          <Text className="mt-3 text-xl font-semibold text-[#4A4A4A] text-center leading-7">
             A sua e a deles
           </Text>
         </View>
@@ -244,14 +245,16 @@ export default function HomeScreen() {
         </View>
 
         {/* Incentivo à adoção responsável */}
-        <View className="items-center py-8 px-6 bg-[#f8f7f9] gap-5">
-          <Text className="text-lg font-extrabold text-[#1a1a1a] text-center leading-[26px]">
+        <View className="items-center py-10 px-6 bg-[#f8f7f9] gap-5">
+          <Text className="text-xl font-extrabold text-[#1a1a1a] text-center leading-8">
             Valorize a adoção{"\n"}responsável
           </Text>
 
-          <View className="w-40 h-40 rounded-2xl bg-[#e8e8e8] items-center justify-center">
-            <Ionicons name="paw" size={56} color="#ccc" />
-          </View>
+          <Image
+            source={require("../../assets/images/banner-adocao-responsavel.jpeg")}
+            style={{ width: 360, height: 260, borderRadius: 24 }}
+            resizeMode="contain"
+          />
 
           <TouchableOpacity
             className="bg-[#7B2FBE] px-10 py-3.5 rounded-[30px]"

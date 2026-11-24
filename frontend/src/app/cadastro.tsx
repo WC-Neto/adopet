@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { createElement, useState } from "react";
 import {
   Image,
   Platform,
@@ -47,6 +47,24 @@ export default function Cadastro() {
   const [erro, setErro] = useState("");
   const [carregando, setCarregando] = useState(false);
 
+  const validarCpfCompleto = (cpfValor: string): boolean => {
+    const numeros = cpfValor.replace(/\D/g, "");
+    if (numeros.length !== 11) return false;
+    if (/^(\d)\1{10}$/.test(numeros)) return false;
+
+    const calcularDigito = (base: string, fatorInicial: number): number => {
+      const soma = base
+        .split("")
+        .reduce((acc, digito, idx) => acc + Number(digito) * (fatorInicial - idx), 0);
+      const resto = (soma * 10) % 11;
+      return resto === 10 ? 0 : resto;
+    };
+
+    const digito1 = calcularDigito(numeros.slice(0, 9), 10);
+    const digito2 = calcularDigito(numeros.slice(0, 10), 11);
+    return digito1 === Number(numeros[9]) && digito2 === Number(numeros[10]);
+  };
+
   const handleCadastrar = async () => {
     setErro("");
 
@@ -64,8 +82,10 @@ export default function Cadastro() {
     }
 
     const cpfNumeros = cpf.replace(/\D/g, "");
-    if (cpfNumeros.length !== 11) {
-      setErro("O CPF deve conter 11 dígitos numéricos.");
+    if (!validarCpfCompleto(cpf)) {
+      setErro(
+        "CPF inválido. Verifique o formato, não use sequências repetidas (ex.: 111.111.111-11) e confira os dígitos verificadores."
+      );
       return;
     }
 
@@ -235,6 +255,7 @@ export default function Cadastro() {
               value={telefone}
               onChangeText={setTelefone}
               keyboardType="phone-pad"
+              autoComplete="tel"
             />
 
             <Input
@@ -281,6 +302,9 @@ export default function Cadastro() {
               value={senha}
               onChangeText={setSenha}
               secureTextEntry
+              showCharCount
+              autoComplete="new-password"
+              name="new-password"
             />
 
             <Input
@@ -289,10 +313,12 @@ export default function Cadastro() {
               value={confirmarSenha}
               onChangeText={setConfirmarSenha}
               secureTextEntry
+              autoComplete="new-password"
+              name="confirm-password"
             />
 
-            <Text className="text-[12px] font-bold text-[#1A1A1A] text-center mt-[6px] mb-[20px] leading-[18px]">
-              A senha deve ter no mínimo 8{"\n"}caracteres
+            <Text className="text-[12px] font-bold text-[#1A1A1A] text-center mt-[2px] mb-[20px] leading-[18px]">
+              A senha deve ter no mínimo 8 caracteres
             </Text>
 
             {erro ? (

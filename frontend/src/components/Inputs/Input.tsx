@@ -1,6 +1,8 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useEffect, useRef, useState } from 'react';
 import {
   KeyboardTypeOptions,
+  Platform,
+  ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
@@ -18,6 +20,10 @@ type InputProps = {
   rightIcon?: ReactNode;
   options?: string[];
   isDate?: boolean;
+  showCharCount?: boolean;
+  autoComplete?: string;
+  textContentType?: any;
+  name?: string;
 };
 
 const MONTHS = [
@@ -47,6 +53,10 @@ export default function Input({
   rightIcon,
   options,
   isDate = false,
+  showCharCount = false,
+  autoComplete,
+  textContentType,
+  name,
 }: InputProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
@@ -55,8 +65,19 @@ export default function Input({
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [viewMonth, setViewMonth] = useState(new Date().getMonth());
   const [viewYear, setViewYear] = useState(2000);
+  const selectScrollRef = useRef<ScrollView>(null);
 
   const isSelect = Array.isArray(options) && options.length > 0;
+
+  useEffect(() => {
+    if (!isSelect || !isOpen || !options || !value) return;
+    const index = options.findIndex((option) => option === value);
+    if (index < 0) return;
+    const timer = setTimeout(() => {
+      selectScrollRef.current?.scrollTo({ y: Math.max(0, index * 42 - 42), animated: true });
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [isSelect, isOpen, options, value]);
 
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
   const firstDayOfWeek = new Date(viewYear, viewMonth, 1).getDay();
@@ -128,20 +149,36 @@ export default function Input({
 
           {isOpen && (
             <View className="bg-[#F5EDED] border border-[#9E9595] rounded-[16px] mt-[4px] overflow-hidden">
-              {options.map((option) => (
-                <TouchableOpacity
-                  key={option}
-                  onPress={() => {
-                    onChangeText?.(option);
-                    setIsOpen(false);
-                  }}
-                  className="py-[10px] px-[16px] border-b border-[#E5DCDC] outline-none focus:outline-none"
-                >
-                  <Text className="text-[13px] text-center text-[#080909]">
-                    {option}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+              <ScrollView
+                ref={selectScrollRef}
+                nestedScrollEnabled
+                keyboardShouldPersistTaps="handled"
+                style={{ maxHeight: 220 }}
+              >
+                {options.map((option) => {
+                  const selecionada = option === value;
+                  return (
+                    <TouchableOpacity
+                      key={option}
+                      onPress={() => {
+                        onChangeText?.(option);
+                        setIsOpen(false);
+                      }}
+                      className={`py-[10px] px-[16px] border-b border-[#E5DCDC] outline-none focus:outline-none ${
+                        selecionada ? 'bg-[#E9D7F2]' : ''
+                      }`}
+                    >
+                      <Text
+                        className={`text-[13px] text-center ${
+                          selecionada ? 'text-[#6B0889] font-semibold' : 'text-[#080909]'
+                        }`}
+                      >
+                        {option}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
             </View>
           )}
         </View>
@@ -160,6 +197,9 @@ export default function Input({
               }}
               onBlur={() => setIsFocused(false)}
               underlineColorAndroid="transparent"
+              autoComplete={autoComplete as any}
+              textContentType={textContentType}
+              {...(Platform.OS === 'web' && name ? { nativeID: name } : {})}
               className="flex-1 h-full text-center text-[13px] text-[#080909] tracking-wide py-0 bg-transparent outline-none focus:outline-none border-0"
             />
             <TouchableOpacity
@@ -261,35 +301,45 @@ export default function Input({
           )}
         </View>
       ) : (
-        <View className="flex-row items-center justify-center bg-[#F5EDED] border border-[#9E9595] rounded-[22px] h-[42px] px-[16px] relative">
-          <TextInput
-            value={value}
-            onChangeText={onChangeText}
-            placeholder={isFocused ? '' : placeholder}
-            placeholderTextColor="#9A9090"
-            secureTextEntry={secureTextEntry && !isPasswordVisible}
-            keyboardType={keyboardType}
-            onFocus={() => setIsFocused(true)}
-            onBlur={() => setIsFocused(false)}
-            underlineColorAndroid="transparent"
-            className="flex-1 h-full text-center text-[13px] text-[#080909] tracking-wide py-0 bg-transparent outline-none focus:outline-none border-0"
-          />
-          {secureTextEntry ? (
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={() => setIsPasswordVisible((prev) => !prev)}
-              className="absolute right-[16px] outline-none focus:outline-none"
-            >
-              <Feather
-                name={isPasswordVisible ? 'eye' : 'eye-off'}
-                size={16}
-                color="#7A7070"
-              />
-            </TouchableOpacity>
-          ) : (
-            rightIcon && (
-              <View className="absolute right-[16px]">{rightIcon}</View>
-            )
+        <View>
+          <View className="flex-row items-center justify-center bg-[#F5EDED] border border-[#9E9595] rounded-[22px] h-[42px] px-[16px] relative">
+            <TextInput
+              value={value}
+              onChangeText={onChangeText}
+              placeholder={isFocused ? '' : placeholder}
+              placeholderTextColor="#9A9090"
+              secureTextEntry={secureTextEntry && !isPasswordVisible}
+              keyboardType={keyboardType}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
+              underlineColorAndroid="transparent"
+              autoComplete={autoComplete as any}
+              textContentType={textContentType}
+              {...(Platform.OS === 'web' && name ? { nativeID: name } : {})}
+              className="flex-1 h-full text-center text-[13px] text-[#080909] tracking-wide py-0 bg-transparent outline-none focus:outline-none border-0"
+            />
+            {secureTextEntry ? (
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => setIsPasswordVisible((prev) => !prev)}
+                className="absolute right-[16px] outline-none focus:outline-none"
+              >
+                <Feather
+                  name={isPasswordVisible ? 'eye' : 'eye-off'}
+                  size={16}
+                  color="#7A7070"
+                />
+              </TouchableOpacity>
+            ) : (
+              rightIcon && (
+                <View className="absolute right-[16px]">{rightIcon}</View>
+              )
+            )}
+          </View>
+          {showCharCount && (
+            <Text className="text-[14px] text-[#4A4A4A] mt-[2px] ml-[14px]">
+              {(value ?? '').length} {(value ?? '').length === 1 ? 'caractere' : 'caracteres'}
+            </Text>
           )}
         </View>
       )}

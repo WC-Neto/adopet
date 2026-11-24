@@ -32,6 +32,16 @@ export default function CadastroPetComportamento() {
       return;
     }
 
+    if (!historia.trim()) {
+      setErro("Preencha a história do pet antes de continuar.");
+      return;
+    }
+
+    if (!personalidade.trim()) {
+      setErro("Preencha a personalidade do pet antes de continuar.");
+      return;
+    }
+
     setCarregando(true);
 
     const controller = new AbortController();
@@ -45,9 +55,9 @@ export default function CadastroPetComportamento() {
           headers: { "Content-Type": "application/json" },
           signal: controller.signal,
           body: JSON.stringify({
-            historia: historia.trim() || null,
+            historia: historia.trim(),
             motivo_doacao: motivo.trim() || null,
-            personalidade: personalidade.trim() || null,
+            personalidade: personalidade.trim(),
           }),
         }
       );
@@ -83,7 +93,7 @@ export default function CadastroPetComportamento() {
   return (
     <FormLayout tituloCartao="Conte mais sobre o pet">
       <CampoTexto
-        label="Nos conte um pouco sobre a história do pet:"
+        label="Nos conte um pouco sobre a história do pet: *"
         value={historia}
         onChangeText={setHistoria}
       />
@@ -95,10 +105,12 @@ export default function CadastroPetComportamento() {
       />
 
       <CampoTexto
-        label="Fale um pouco também sobre a personalidade dele:"
+        label="Fale um pouco também sobre a personalidade dele: *"
         value={personalidade}
         onChangeText={setPersonalidade}
       />
+
+      <Text className="text-[12px] text-[#555] mb-[10px]">* Campos obrigatórios: história e personalidade.</Text>
 
       {erro ? (
         <Text className="text-[13px] font-semibold text-[#D92D20] text-center mb-[14px]">

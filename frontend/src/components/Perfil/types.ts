@@ -11,6 +11,7 @@
 };
 
 export type Usuario = {
+  id_usuario?: number;
   nome_usuario: string;
   email: string;
   telefone: string;
@@ -18,4 +19,7 @@ export type Usuario = {
   data_nascimento: string;
   meus_pets: PetPerfil[];
   favoritos: PetPerfil[];
+  perfil_adocao_resultado?: string | null;
+  perfil_adocao_respostas?: Record<string, string> | null;
+  perfil_adocao_atualizado_em?: string | null;
 };

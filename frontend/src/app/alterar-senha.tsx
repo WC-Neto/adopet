@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { createElement, useState } from "react";
 import {
   Image,
   Platform,
@@ -216,13 +216,17 @@ export default function AlterarSenha() {
           </View>
 
           {/* FORM CARD */}
-          <View className="w-[84%] max-w-[380px] bg-white rounded-[28px] mt-[-45px] mb-[32px] px-[34px] py-[32px] shadow-md border border-[#E2DDDD] border-b-[3px] border-b-[#C8C2C2]">
+          {(() => {
+            const cardContent = (
+              <View className="w-full bg-white rounded-[28px] px-[34px] py-[32px] shadow-md border border-[#E2DDDD] border-b-[3px] border-b-[#C8C2C2]">
             <Input
               label="Email"
               placeholder="Digite seu e-mail"
               value={email}
               onChangeText={setEmail}
               keyboardType="email-address"
+              autoComplete="email"
+              name="email"
             />
 
             <Input
@@ -231,6 +235,7 @@ export default function AlterarSenha() {
               value={cpf}
               onChangeText={setCpf}
               keyboardType="numeric"
+              autoComplete="off"
             />
 
             <Input
@@ -239,6 +244,8 @@ export default function AlterarSenha() {
               value={novaSenha}
               onChangeText={setNovaSenha}
               secureTextEntry
+              autoComplete="new-password"
+              name="new-password"
             />
 
             <Input
@@ -247,6 +254,8 @@ export default function AlterarSenha() {
               value={confirmarSenha}
               onChangeText={setConfirmarSenha}
               secureTextEntry
+              autoComplete="new-password"
+              name="confirm-password"
             />
 
             <Text className="text-[12px] font-bold text-[#1A1A1A] text-center mt-[4px] mb-[20px] leading-[18px]">
@@ -283,7 +292,29 @@ export default function AlterarSenha() {
                 Lembrou a senha?{"\n"}Voltar para o login
               </Text>
             </TouchableOpacity>
-          </View>
+              </View>
+            );
+
+            if (Platform.OS === "web") {
+              return createElement(
+                "form",
+                {
+                  onSubmit: (e: any) => {
+                    e.preventDefault?.();
+                    if (!carregando) handleAlterarSenha();
+                  },
+                  style: { width: "84%", maxWidth: 380, marginTop: -45, marginBottom: 32 },
+                },
+                cardContent
+              );
+            }
+
+            return (
+              <View className="w-[84%] max-w-[380px] mt-[-45px] mb-[32px]">
+                {cardContent}
+              </View>
+            );
+          })()}
         </View>
 
         {/* BOTTOM SAFE AREA */}

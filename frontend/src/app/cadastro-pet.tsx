@@ -41,7 +41,7 @@ export default function CadastroPet() {
   const [porte, setPorte] = useState("");
   const [sexo, setSexo] = useState("");
   const [dataNascimento, setDataNascimento] = useState("");
-  const [idadeDesconhecida, setIdadeDesconhecida] = useState(false);
+  const [nascimentoDesconhecido, setNascimentoDesconhecido] = useState(false);
   const [foto, setFoto] = useState<string | null>(null);
 
   // pra abrir/fechar os selects
@@ -92,9 +92,35 @@ export default function CadastroPet() {
       return;
     }
 
-    if (!idadeDesconhecida && !dataNascimento.trim()) {
-      setErro("Informe a data ou marque que não sabe a idade.");
-      return;
+    let dataNascimentoParaEnvio: string | null = null;
+    if (!nascimentoDesconhecido) {
+      if (!dataNascimento.trim()) {
+        setErro("Informe a data de nascimento do pet (DD/MM/AAAA) ou marque que não sabe.");
+        return;
+      }
+
+      const dataRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+      const matchData = dataNascimento.trim().match(dataRegex);
+      if (!matchData) {
+        setErro("Data de nascimento inválida. Use o formato DD/MM/AAAA.");
+        return;
+      }
+      const dia = Number(matchData[1]);
+      const mes = Number(matchData[2]);
+      const ano = Number(matchData[3]);
+      const dataNasc = new Date(ano, mes - 1, dia);
+      const hoje = new Date();
+      hoje.setHours(0, 0, 0, 0);
+      if (
+        dataNasc.getFullYear() !== ano ||
+        dataNasc.getMonth() !== mes - 1 ||
+        dataNasc.getDate() !== dia ||
+        dataNasc > hoje
+      ) {
+        setErro("Data de nascimento inválida. Verifique se a data existe e não é futura.");
+        return;
+      }
+      dataNascimentoParaEnvio = dataNascimento.trim();
     }
 
     const controller = new AbortController();
@@ -116,7 +142,7 @@ export default function CadastroPet() {
           especie,
           porte,
           sexo,
-          dt_nascimento: idadeDesconhecida ? null : dataNascimento.trim(),
+          dt_nascimento: dataNascimentoParaEnvio,
           id_responsavel: usuario?.id_usuario ?? 1,
         }),
       });
@@ -343,38 +369,45 @@ export default function CadastroPet() {
           {!abrirSexo && <View className="mb-[8px]" />}
 
           {/* data de nascimento */}
-          <Text className="text-[#333] text-[14px] mb-[6px]">Data de Nascimento</Text>
+          <Text className="text-[#333] text-[14px] mb-[6px]">Data de nascimento do pet</Text>
           <TextInput
-            className="bg-[#F3F0F0] rounded-[20px] px-[16px] py-[12px] mb-[10px] text-[#333]"
+            className={`rounded-[20px] px-[16px] py-[12px] mb-[8px] ${
+              nascimentoDesconhecido ? "bg-[#E6E6E6] text-[#777]" : "bg-[#F3F0F0] text-[#333]"
+            }`}
             placeholder="DD/MM/AAAA"
             placeholderTextColor="#9A9A9A"
             value={dataNascimento}
             onChangeText={setDataNascimento}
             keyboardType="numeric"
+            editable={!nascimentoDesconhecido}
           />
-
-          {/* se nao souber a idade marca aqui */}
           <TouchableOpacity
-            className="flex-row items-start mb-[20px]"
-            onPress={() => setIdadeDesconhecida(!idadeDesconhecida)}
-            activeOpacity={0.7}
+            className="flex-row items-center mb-[8px]"
+            activeOpacity={0.8}
+            onPress={() => {
+              setNascimentoDesconhecido((prev) => {
+                const novo = !prev;
+                if (novo) setDataNascimento("");
+                return novo;
+              });
+            }}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: nascimentoDesconhecido }}
           >
-            <Text className="flex-1 text-[12px] text-[#555] pr-[10px] leading-[16px]">
-              Marque essa caixinha caso não saiba a idade do animal, e informe a
-              data em que abrigou o mesmo.
-            </Text>
             <View
-              className="w-[22px] h-[22px] rounded-[4px] border-2 items-center justify-center"
-              style={{
-                backgroundColor: idadeDesconhecida ? "#6B0889" : "#FFFFFF",
-                borderColor: idadeDesconhecida ? "#6B0889" : "#999999",
-              }}
+              className={`w-[20px] h-[20px] rounded-[4px] border items-center justify-center mr-[8px] ${
+                nascimentoDesconhecido ? "bg-[#6B0889] border-[#6B0889]" : "bg-white border-[#999]"
+              }`}
             >
-              {idadeDesconhecida && (
-                <AntDesign name="check" size={14} color="white" />
-              )}
+              {nascimentoDesconhecido ? <Ionicons name="checkmark" size={14} color="#fff" /> : null}
             </View>
+            <Text className="text-[13px] text-[#333]">Não sei a data de nascimento do pet</Text>
           </TouchableOpacity>
+          <Text className="text-[12px] text-[#555] mb-[20px] leading-[16px]">
+            {nascimentoDesconhecido
+              ? "Sem a data de nascimento, a idade poderá aparecer como não informada."
+              : "Informe a data de nascimento do pet. A idade será calculada automaticamente a partir dessa data."}
+          </Text>
 
           {erro ? (
             <Text className="text-[13px] font-semibold text-[#D92D20] text-center mb-[14px]">

@@ -84,7 +84,21 @@ export default function SideMenu({ open, onClose }: Props) {
     transform: [{ translateX: (progress.value - 1) * menuWidth }],
   }));
 
+  function desfocarAtivoWeb() {
+    if (Platform.OS !== "web") return;
+    try {
+      const el = (globalThis as any)?.document?.activeElement as
+        | { blur?: () => void }
+        | null
+        | undefined;
+      el?.blur?.();
+    } catch {
+      // ignora
+    }
+  }
+
   function navegar(rota: string) {
+    desfocarAtivoWeb();
     onClose();
     router.push(rota as Href);
   }
@@ -108,7 +122,10 @@ export default function SideMenu({ open, onClose }: Props) {
         >
           <Pressable
             style={{ flex: 1 }}
-            onPress={onClose}
+            onPress={() => {
+              desfocarAtivoWeb();
+              onClose();
+            }}
             accessibilityLabel="Fechar menu"
           />
         </Animated.View>
@@ -146,7 +163,10 @@ export default function SideMenu({ open, onClose }: Props) {
                 ADOPET
               </Text>
               <Pressable
-                onPress={onClose}
+                onPress={() => {
+                  desfocarAtivoWeb();
+                  onClose();
+                }}
                 hitSlop={8}
                 accessibilityRole="button"
                 accessibilityLabel="Fechar menu"

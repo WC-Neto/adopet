@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { View, Text, TouchableOpacity, ScrollView, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useRouter, useLocalSearchParams } from "expo-router";
 import { AntDesign, Feather } from "@expo/vector-icons";
 import Header from "../components/Headers/Header";
+import Footer from "../components/Footers/Footer";
 
 // opcoes dos selects
 const estados = [
@@ -41,6 +42,19 @@ export default function Filtro() {
 
   // controla qual select ta aberto ("" = nenhum)
   const [aberto, setAberto] = useState("");
+  const selectScrollRefs = useRef<Record<string, ScrollView | null>>({});
+
+  const rolarParaSelecionado = (nomeCampo: string, valor: string, opcoes: string[]) => {
+    if (!valor) return;
+    const index = opcoes.findIndex((opcao) => opcao === valor);
+    if (index < 0) return;
+    setTimeout(() => {
+      selectScrollRefs.current[nomeCampo]?.scrollTo({
+        y: Math.max(0, index * 44 - 44),
+        animated: true,
+      });
+    }, 50);
+  };
 
   // busca as cidades quando o estado muda (api do ibge)
   useEffect(() => {
@@ -58,8 +72,12 @@ export default function Filtro() {
   }, [estado]);
 
   // abre/fecha um select
-  const alternar = (nome: string) => {
-    setAberto(aberto === nome ? "" : nome);
+  const alternar = (nome: string, valor?: string, opcoes?: string[]) => {
+    const vaiAbrir = aberto !== nome;
+    setAberto(vaiAbrir ? nome : "");
+    if (vaiAbrir && valor && opcoes) {
+      rolarParaSelecionado(nome, valor, opcoes);
+    }
   };
 
   // limpa todos os filtros
@@ -201,7 +219,7 @@ export default function Filtro() {
               >
                 <TouchableOpacity
                   className="flex-row items-center justify-between px-[16px] h-[52px]"
-                  onPress={() => alternar(campo.nome)}
+                  onPress={() => alternar(campo.nome, campo.valor, campo.opcoes)}
                   activeOpacity={0.7}
                 >
                   <Text className="text-[16px] font-medium text-[#222]">
@@ -224,24 +242,34 @@ export default function Filtro() {
                           : "Nenhuma opção"}
                       </Text>
                     ) : (
-                      campo.opcoes.map((item) => (
-                        <TouchableOpacity
-                          key={item}
-                          className="flex-row items-center justify-between px-[24px] py-[12px]"
-                          onPress={() => campo.escolher(item)}
-                        >
-                          <Text
-                            style={{
-                              color: item === campo.valor ? "#6B0889" : "#333333",
-                            }}
+                      <ScrollView
+                        ref={(ref) => {
+                          selectScrollRefs.current[campo.nome] = ref;
+                        }}
+                        nestedScrollEnabled
+                        keyboardShouldPersistTaps="handled"
+                        style={{ maxHeight: 220 }}
+                      >
+                        {campo.opcoes.map((item) => (
+                          <TouchableOpacity
+                            key={item}
+                            className="flex-row items-center justify-between px-[24px] py-[12px]"
+                            onPress={() => campo.escolher(item)}
                           >
-                            {item}
-                          </Text>
-                          {item === campo.valor && (
-                            <AntDesign name="check" size={16} color="#6B0889" />
-                          )}
-                        </TouchableOpacity>
-                      ))
+                            <Text
+                              style={{
+                                color: item === campo.valor ? "#6B0889" : "#333333",
+                                fontWeight: item === campo.valor ? "600" : "400",
+                              }}
+                            >
+                              {item}
+                            </Text>
+                            {item === campo.valor && (
+                              <AntDesign name="check" size={16} color="#6B0889" />
+                            )}
+                          </TouchableOpacity>
+                        ))}
+                      </ScrollView>
                     )}
                   </View>
                 )}
@@ -274,8 +302,9 @@ export default function Filtro() {
         </View>
       </View>
 
-      {/* so respeita a area segura de baixo */}
-      <SafeAreaView edges={["bottom"]} className="bg-[#F09545]" />
+      <SafeAreaView edges={["bottom"]} className="bg-[#6B0889]">
+        <Footer backgroundColor="#6B0889" />
+      </SafeAreaView>
     </View>
   );
 }

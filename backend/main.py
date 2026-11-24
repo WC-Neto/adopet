@@ -203,47 +203,107 @@ class UsuarioPerfil(BaseModel):
     tipo_usuario: str = "Adotante"
     meus_pets: List[PetPerfil] = []
     favoritos: List[PetPerfil] = []
+    perfil_adocao_resultado: Optional[str] = None
+    perfil_adocao_respostas: Optional[dict] = None
+    perfil_adocao_atualizado_em: Optional[str] = None
+
+
+class QuestionarioAdocaoPayload(BaseModel):
+    resultado: str
+    respostas: dict
+    atualizado_em: Optional[str] = None
 
 
 def calcular_idade_pet(dt_nasc) -> str:
     if not dt_nasc:
-        return "Não informado"
+        return "Idade não informada"
     hoje = date.today()
     meses = (hoje.year - dt_nasc.year) * 12 + hoje.month - dt_nasc.month
     if hoje.day < dt_nasc.day:
         meses -= 1
     if meses < 0:
-        return "Não informado"
+        return "Idade não informada"
     anos = meses // 12
+    meses_restantes = meses % 12
+    if anos > 0 and meses_restantes > 0:
+        return (
+            f"{anos} {'ano' if anos == 1 else 'anos'} e "
+            f"{meses_restantes} {'mês' if meses_restantes == 1 else 'meses'}"
+        )
     if anos > 0:
         return f"{anos} {'ano' if anos == 1 else 'anos'}"
     return f"{meses} {'mês' if meses == 1 else 'meses'}"
 
 
 def montar_perfil_usuario(id_usuario: int, conn) -> UsuarioPerfil:
-    u = conn.execute(
-        "SELECT id_usuario, nome, email, telefone, tipo_usuario, cidade, uf FROM usuario WHERE id_usuario = %s",
-        (id_usuario,)
-    ).fetchone()
+    perfil_adocao_resultado = None
+    perfil_adocao_respostas = None
+    perfil_adocao_atualizado_em = None
+
+    try:
+        u = conn.execute(
+            """
+            SELECT id_usuario, nome, email, telefone, tipo_usuario, cidade, uf,
+                   perfil_adocao_resultado, perfil_adocao_respostas, perfil_adocao_atualizado_em
+            FROM usuario
+            WHERE id_usuario = %s
+            """,
+            (id_usuario,)
+        ).fetchone()
+        if u:
+            perfil_adocao_resultado = u[7]
+            perfil_adocao_respostas = u[8]
+            perfil_adocao_atualizado_em = u[9]
+    except psycopg.Error:
+        conn.rollback()
+        try:
+            u = conn.execute(
+                """
+                SELECT id_usuario, nome, email, telefone, tipo_usuario, cidade, uf
+                FROM usuario
+                WHERE id_usuario = %s
+                """,
+                (id_usuario,)
+            ).fetchone()
+        except psycopg.Error:
+            conn.rollback()
+            u = None
+
     if not u:
         raise HTTPException(status_code=404, detail="Usuário não encontrado.")
 
     # Meus pets: criados pelo usuario OU adotados / em processo
-    pets_rows = conn.execute(
-        """
-        SELECT a.id_animal, a.nome, a.sexo, a.dt_nascimento, a.cidade, a.uf, a.foto_url, a.situacao
-        FROM animal a
-        WHERE a.id_responsavel = %s
-        UNION
-        SELECT a.id_animal, a.nome, a.sexo, a.dt_nascimento, a.cidade, a.uf, a.foto_url,
-               CASE WHEN ad.situacao = 'Aprovada' THEN 'Adotado(a)' ELSE 'Em Processo' END as situacao
-        FROM animal a
-        JOIN adocao ad ON ad.id_animal = a.id_animal
-        WHERE ad.id_adotante = %s AND ad.situacao IN ('Pendente', 'Aprovada')
-        ORDER BY id_animal
-        """,
-        (id_usuario, id_usuario)
-    ).fetchall()
+    try:
+        pets_rows = conn.execute(
+            """
+            SELECT a.id_animal, a.nome, a.sexo, a.dt_nascimento, a.cidade, a.uf, a.foto_url, a.situacao
+            FROM animal a
+            WHERE a.id_responsavel = %s
+            UNION
+            SELECT a.id_animal, a.nome, a.sexo, a.dt_nascimento, a.cidade, a.uf, a.foto_url,
+                   CASE WHEN ad.situacao = 'Aprovada' THEN 'Adotado(a)' ELSE 'Em Processo' END as situacao
+            FROM animal a
+            JOIN adocao ad ON ad.id_animal = a.id_animal
+            WHERE ad.id_adotante = %s AND ad.situacao IN ('Pendente', 'Aprovada')
+            ORDER BY id_animal
+            """,
+            (id_usuario, id_usuario)
+        ).fetchall()
+    except psycopg.Error:
+        conn.rollback()
+        try:
+            pets_rows = conn.execute(
+                """
+                SELECT a.id_animal, a.nome, a.sexo, a.dt_nascimento, a.cidade, a.uf, a.foto_url, a.situacao
+                FROM animal a
+                WHERE a.id_responsavel = %s
+                ORDER BY a.id_animal
+                """,
+                (id_usuario,)
+            ).fetchall()
+        except psycopg.Error:
+            conn.rollback()
+            pets_rows = []
 
     meus_pets = [
         PetPerfil(
@@ -258,17 +318,21 @@ def montar_perfil_usuario(id_usuario: int, conn) -> UsuarioPerfil:
         for r in pets_rows
     ]
 
-    # Favoritos
-    favs_rows = conn.execute(
-        """
-        SELECT a.id_animal, a.nome, a.sexo, a.dt_nascimento, a.cidade, a.uf, a.foto_url, a.situacao
-        FROM animal a
-        JOIN favorito f ON f.id_animal = a.id_animal
-        WHERE f.id_usuario = %s
-        ORDER BY f.data_criacao DESC
-        """,
-        (id_usuario,)
-    ).fetchall()
+    # Favoritos (tolerante a banco sem migration da tabela favorito)
+    try:
+        favs_rows = conn.execute(
+            """
+            SELECT a.id_animal, a.nome, a.sexo, a.dt_nascimento, a.cidade, a.uf, a.foto_url, a.situacao
+            FROM animal a
+            JOIN favorito f ON f.id_animal = a.id_animal
+            WHERE f.id_usuario = %s
+            ORDER BY f.data_criacao DESC
+            """,
+            (id_usuario,)
+        ).fetchall()
+    except psycopg.Error:
+        conn.rollback()
+        favs_rows = []
 
     favoritos = [
         PetPerfil(
@@ -283,6 +347,21 @@ def montar_perfil_usuario(id_usuario: int, conn) -> UsuarioPerfil:
         for r in favs_rows
     ]
 
+    respostas = perfil_adocao_respostas
+    if isinstance(respostas, str):
+        try:
+            import json as _json
+            respostas = _json.loads(respostas)
+        except Exception:
+            respostas = None
+
+    atualizado = perfil_adocao_atualizado_em
+    if atualizado is not None and not isinstance(atualizado, str):
+        try:
+            atualizado = atualizado.isoformat()
+        except Exception:
+            atualizado = str(atualizado)
+
     return UsuarioPerfil(
         id_usuario=u[0],
         nome_usuario=u[1],
@@ -292,7 +371,10 @@ def montar_perfil_usuario(id_usuario: int, conn) -> UsuarioPerfil:
         cidade=f"{u[5]}, {u[6]}",
         data_nascimento="Não informada",
         meus_pets=meus_pets,
-        favoritos=favoritos
+        favoritos=favoritos,
+        perfil_adocao_resultado=perfil_adocao_resultado,
+        perfil_adocao_respostas=respostas if isinstance(respostas, dict) else None,
+        perfil_adocao_atualizado_em=atualizado,
     )
 
 
@@ -358,23 +440,48 @@ def listar_usuarios():
         )
 
 
+def validar_cpf(cpf: str) -> str:
+    if not cpf:
+        raise HTTPException(status_code=400, detail="CPF não informado.")
+
+    cpf_numerico = re.sub(r"\D", "", cpf)
+
+    if len(cpf_numerico) != 11:
+        raise HTTPException(status_code=400, detail="CPF deve conter 11 dígitos numéricos.")
+
+    if cpf_numerico == cpf_numerico[0] * 11:
+        raise HTTPException(
+            status_code=400,
+            detail="CPF inválido. Não use sequências repetidas (ex.: 111.111.111-11).",
+        )
+
+    def calcular_digito(base: str, fator_inicial: int) -> str:
+        soma = sum(int(digito) * (fator_inicial - idx) for idx, digito in enumerate(base))
+        resto = (soma * 10) % 11
+        return "0" if resto == 10 else str(resto)
+
+    digito1 = calcular_digito(cpf_numerico[:9], 10)
+    digito2 = calcular_digito(cpf_numerico[:10], 11)
+    if cpf_numerico[-2:] != digito1 + digito2:
+        raise HTTPException(
+            status_code=400,
+            detail="CPF inválido. Verifique os dígitos verificadores.",
+        )
+
+    return cpf_numerico
+
+
 @app.post("/usuarios", response_model=UsuarioResponse, status_code=201)
 def criar_usuario(usuario: UsuarioCreate):
     nome_limpo = usuario.nome.strip()
     email_limpo = usuario.email.strip().lower()
-    cpf_limpo = re.sub(r"\D", "", usuario.cpf)
+    cpf_limpo = validar_cpf(usuario.cpf)
     telefone_limpo = re.sub(r"\D", "", usuario.telefone)[:11]
 
     if not nome_limpo or not email_limpo:
         raise HTTPException(
             status_code=400,
             detail="Nome e e-mail são obrigatórios.",
-        )
-
-    if len(cpf_limpo) != 11:
-        raise HTTPException(
-            status_code=400,
-            detail="O CPF deve conter exatamente 11 dígitos numéricos.",
         )
 
     if len(telefone_limpo) < 10:
@@ -581,6 +688,52 @@ def obter_perfil_usuario_por_id(id_usuario: int):
         raise
     except psycopg.Error as e:
         raise HTTPException(status_code=500, detail=f"Erro ao consultar perfil: {e}")
+
+
+@app.put("/usuarios/{id_usuario}/questionario-adocao")
+def salvar_questionario_adocao(id_usuario: int, payload: QuestionarioAdocaoPayload):
+    import json as _json
+
+    resultado = (payload.resultado or "").strip()
+    if not resultado:
+        raise HTTPException(status_code=400, detail="Informe o resultado do questionário.")
+    if not isinstance(payload.respostas, dict):
+        raise HTTPException(status_code=400, detail="Respostas do questionário inválidas.")
+
+    atualizado_em = payload.atualizado_em or datetime.utcnow().isoformat()
+    try:
+        with conectar(BANCO) as conn:
+            existe = conn.execute(
+                "SELECT 1 FROM usuario WHERE id_usuario = %s",
+                (id_usuario,),
+            ).fetchone()
+            if not existe:
+                raise HTTPException(status_code=404, detail="Usuário não encontrado.")
+
+            conn.execute(
+                """
+                UPDATE usuario
+                SET perfil_adocao_resultado = %s,
+                    perfil_adocao_respostas = %s::jsonb,
+                    perfil_adocao_atualizado_em = %s
+                WHERE id_usuario = %s
+                """,
+                (resultado, _json.dumps(payload.respostas, ensure_ascii=False), atualizado_em, id_usuario),
+            )
+            conn.commit()
+        return {"mensagem": "Perfil de adoção salvo com sucesso.", "resultado": resultado}
+    except HTTPException:
+        raise
+    except psycopg.Error as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erro ao salvar questionário. Execute a migration 002_questionario_adocao.sql se necessário. Detalhes: {e}",
+        )
+    except HTTPException:
+        raise
+    except psycopg.Error as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao consultar perfil: {e}")
+
 
 
 @app.get("/animais", response_model=List[AnimalResponse])
@@ -893,9 +1046,20 @@ class ComportamentoUpdate(BaseModel):
 
 @app.put("/animais/{id_animal}/comportamento")
 def atualizar_comportamento(id_animal: int, dados: ComportamentoUpdate):
-    historia = (dados.historia or "").strip() or None
+    historia = (dados.historia or "").strip()
     motivo = (dados.motivo_doacao or "").strip() or None
-    personalidade = (dados.personalidade or "").strip() or None
+    personalidade = (dados.personalidade or "").strip()
+
+    if not historia:
+        raise HTTPException(
+            status_code=400,
+            detail="O campo história do pet é obrigatório.",
+        )
+    if not personalidade:
+        raise HTTPException(
+            status_code=400,
+            detail="O campo personalidade do pet é obrigatório.",
+        )
 
     try:
         with conectar(BANCO) as conn:
@@ -1033,4 +1197,24 @@ def remover_favorito(id_usuario: int, id_animal: int):
             return {"mensagem": "Pet removido dos favoritos com sucesso!"}
     except psycopg.Error as e:
         raise HTTPException(status_code=500, detail=f"Erro ao remover favorito: {e}")
+
+
+@app.get("/usuarios/{id_usuario}/favoritos", response_model=List[AnimalResponse])
+def listar_favoritos_usuario(id_usuario: int):
+    try:
+        with conectar(BANCO) as conn:
+            linhas = conn.execute(
+                f"""
+                SELECT {COLUNAS_ANIMAL}, u.nome AS nome_responsavel, u.telefone AS telefone_responsavel
+                FROM favorito f
+                JOIN animal a ON a.id_animal = f.id_animal
+                JOIN usuario u ON u.id_usuario = a.id_responsavel
+                WHERE f.id_usuario = %s
+                ORDER BY f.data_criacao DESC, f.id_favorito DESC
+                """,
+                (id_usuario,),
+            ).fetchall()
+            return [resposta_animal(l) for l in linhas]
+    except psycopg.Error as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao listar favoritos: {e}")
 

@@ -18,6 +18,8 @@ import Header from "../components/Headers/Header";
 import { useAuth } from "../context/AuthContext";
 import {
   adicionarFavorito,
+  removerFavorito,
+  listarFavoritos,
   buscarAnimal,
   calcularIdade,
   formatarSexo,
@@ -122,6 +124,27 @@ export default function PetDetailsScreen() {
     };
   }, [animalId, tentativa]);
 
+  useEffect(() => {
+    let ativo = true;
+    if (!animal || !usuario?.id_usuario) {
+      setFavoritado(false);
+      return;
+    }
+
+    listarFavoritos(usuario.id_usuario)
+      .then((favoritos) => {
+        if (!ativo) return;
+        setFavoritado(favoritos.some((f) => f.id_animal === animal.id_animal));
+      })
+      .catch(() => {
+        // mantém estado atual se não for possível consultar
+      });
+
+    return () => {
+      ativo = false;
+    };
+  }, [animal?.id_animal, usuario?.id_usuario]);
+
   const handleAdotar = async () => {
     if (!animal) return;
 
@@ -158,23 +181,30 @@ export default function PetDetailsScreen() {
   const handleFavoritar = async () => {
     if (!animal) return;
 
-    if (!usuario) {
+    if (!usuario?.id_usuario) {
       Alert.alert(
-        "Login Necessário",
-        "Faça login para salvar seus pets favoritos."
+        "Login necessário",
+        "Faça login para salvar seus pets favoritos.",
+        [
+          { text: "Cancelar", style: "cancel" },
+          { text: "Fazer login", onPress: () => router.push("/login") },
+        ]
       );
       return;
     }
 
     try {
-      await adicionarFavorito(animal.id_animal, usuario.id_usuario);
-      setFavoritado(true);
-      Alert.alert(
-        "Favoritado! ❤️",
-        `${animal.nome} foi adicionado aos seus favoritos.`
-      );
+      if (favoritado) {
+        await removerFavorito(usuario.id_usuario, animal.id_animal);
+        setFavoritado(false);
+        Alert.alert("Removido dos favoritos", `${animal.nome} foi removido dos seus Pets favoritos.`);
+      } else {
+        await adicionarFavorito(usuario.id_usuario, animal.id_animal);
+        setFavoritado(true);
+        Alert.alert("Favoritado!", `${animal.nome} foi adicionado aos seus Pets favoritos.`);
+      }
     } catch (e: any) {
-      Alert.alert("Aviso", e.message || "Erro ao favoritar pet.");
+      Alert.alert("Erro", e?.message || "Não foi possível atualizar os favoritos.");
     }
   };
 
