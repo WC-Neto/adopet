@@ -23,14 +23,17 @@ for env_candidate in (PATH.parent / ".env", PATH / ".env"):
         load_dotenv(env_candidate)
         break
 
+DATABASE_URL = os.environ.get("DATABASE_URL")
 HOST = os.environ.get("PGHOST", "localhost")
 PORT = os.environ.get("PGPORT", "5432")
 USER = os.environ.get("PGUSER", "postgres")
 SENHA = os.environ.get("PGPASSWORD", "")
-BANCO = "adopet"
+BANCO = os.environ.get("PGDATABASE", "adopet")
 
 
 def conectar(banco: str = BANCO, **opcoes) -> psycopg.Connection:
+    if DATABASE_URL:
+        return psycopg.connect(DATABASE_URL, connect_timeout=5, **opcoes)
     return psycopg.connect(
         host=HOST,
         port=PORT,
@@ -46,13 +49,17 @@ app = FastAPI(title="Adopet API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:8081",
+        "http://localhost:19006",
+        "https://adopet-frontend.vercel.app",  # confirma se este é o domínio exato do teu front-end na Vercel
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-FOTOS_DIR = PATH / "fotos"
+FOTOS_DIR = Path("/tmp/fotos") if os.environ.get("VERCEL") else PATH / "fotos"
 FOTOS_DIR.mkdir(parents=True, exist_ok=True)
 app.mount("/fotos", StaticFiles(directory=str(FOTOS_DIR)), name="fotos")
 
