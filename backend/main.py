@@ -52,12 +52,14 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:8081",
         "http://localhost:19006",
-        "https://adopet-frontend.vercel.app",  # confirma se este é o domínio exato do teu front-end na Vercel
+        "https://adopet-frontend-ten.vercel.app",
     ],
+    allow_origin_regex=r"https://adopet-frontend.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 FOTOS_DIR = Path("/tmp/fotos") if os.environ.get("VERCEL") else PATH / "fotos"
 FOTOS_DIR.mkdir(parents=True, exist_ok=True)
