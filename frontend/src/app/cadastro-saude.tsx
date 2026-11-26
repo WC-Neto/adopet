@@ -19,7 +19,7 @@ import Footer from "../components/Footers/Footer";
 const debuggerHost = Constants.expoConfig?.hostUri?.split(":")[0];
 const API_URL =
   Platform.OS === "web"
-    ? "http://127.0.0.1:8000"
+    ? "https://adopet-eosin.vercel.app"
     : debuggerHost
       ? `http://${debuggerHost}:8000`
       : "http://192.168.1.179:8000";
